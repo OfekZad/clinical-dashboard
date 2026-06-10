@@ -3,10 +3,11 @@
 import { MoonIcon, SunIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useTheme } from "@/components/theme-provider"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { useLocale } from "@/components/locale-provider"
 
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme()
+  const { t } = useLocale()
 
   return (
     <Button

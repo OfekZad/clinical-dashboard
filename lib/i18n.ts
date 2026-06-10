@@ -1,3 +1,11 @@
+// Localization strings (Hebrew + English)
+
+export type Locale = "he" | "en"
+
+export const defaultLocale: Locale = "he"
+
+export const locales: Locale[] = ["he", "en"]
+
 // Hebrew localization strings
 export const hebrewStrings = {
   dashboard: {
@@ -44,6 +52,7 @@ export const hebrewStrings = {
     stable: "יציב",
     osdiScore: "ניקוד OSDI",
     severity: "חומרה",
+    severityLevel: "רמת חומרה",
     date: "תאריך",
     viewReport: "הצג דוח",
     viewing: "מוצג כעת",
@@ -70,9 +79,20 @@ export const hebrewStrings = {
     previousAssessment: "הערכה קודמת",
     latestAssessment: "הערכה אחרונה",
     symptomFlags: "אינדיקטורים קליניים",
+    symptomFlagsTitle: "דגלי תסמינים",
     questionByQuestion: "פירוט תשובה לתשובה",
     clinicalNote: "הערה קלינית",
     noNotes: "אין הערות קליניות",
+    noNotesYet: "עדיין לא נוספו הערות",
+    noAssessments: "אין הערכות זמינות",
+    aiAssessment: "בינה מלאכותית",
+    selfSurvey: "סקר עצמי",
+    patientResponsesTitle: "תשובות מטופל (סקר עצמי)",
+    patientDescription: "תיאור המטופל",
+    flagScreenShort: "מסך",
+    flagNightShort: "לילה",
+    flagWindShort: "רוח",
+    flagHumidityShort: "לחות",
     currentView: "בתצוגה כעת",
     medications: "תרופות",
     medicationHistory: "היסטוריית תרופות",
@@ -139,6 +159,12 @@ export const hebrewStrings = {
     shareLink: "קישור לשאלון",
     copyLink: "העתק קישור",
     copiedLink: "הקישור הועתק!",
+    shareInstructionPrefix: "שלח קישור זה ל",
+    shareInstructionSuffix: " למילוי שאלון OSDI",
+    greetingPrefix: "שלום",
+    greetingSuffix: ", אנא מלא את השאלון הבא.",
+    surveysPageTitle: "סקרים",
+    autoScoredInfo: "סקרים מחושבים אוטומטית ומופיעים בפרופיל המטופל",
     pendingSurveys: "שאלונים שהתקבלו",
     completedSurveys: "שאלונים שהושלמו",
     viewSurveys: "צפה בשאלונים",
@@ -164,7 +190,6 @@ export const hebrewStrings = {
     medicationNamePlaceholder: "לדוגמה: דמעות מלאכותיות",
     dosageLabel: "מינון (אופציונלי)",
     dosagePlaceholder: "לדוגמה: טיפה אחת",
-    frequencyLabel: "תדירות (אופציונלי)",
     frequencyPlaceholder: "לדוגמה: 4 פעמים ביום",
     startDateLabel: "תאריך התחלה (אופציונלי)",
     stopDateLabel: "תאריך הפסקה (אופציונלי)",
@@ -173,6 +198,8 @@ export const hebrewStrings = {
   },
   common: {
     toggleTheme: "החלף מוד (בהיר/אפל)",
+    toggleLanguage: "החלף שפה",
+    switchLanguageLabel: "English", // Label shown on the toggle to switch to the other language
   },
   roi: {
     title: "ניתוח החזר השקעה",
@@ -214,7 +241,7 @@ export const hebrewStrings = {
       additionalCapacity: "קיבולת נוספת",
       patientsPerMonth: "מטופלים נוספים לחודש",
       surveyCompletion: "השלמת שאלונים",
-      followUpCompliance: "הצלחת ביצוע מעקב", // 
+      followUpCompliance: "הצלחת ביצוע מעקב", //
       estimatedIncrease: "עלייה משוערת בהכנסות",
       monthly: "חודשי",
     },
@@ -236,6 +263,11 @@ export const hebrewStrings = {
     monthlyTrends: "מגמות חודשיות",
     assessmentsOverTime: "הערכות לאורך זמן",
     outcomeDistribution: "התפלגות תוצאות",
+    aiAssessments: "הערכות AI",
+    patientSurveys: "שאלוני מטופלים",
+    assessmentsLabel: "הערכות",
+    minutesSavedShort: "דקות נחסכו",
+    months: ["ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני", "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳"],
 
     // Time period
     last30Days: "30 ימים אחרונים",
@@ -245,16 +277,318 @@ export const hebrewStrings = {
   },
 }
 
+// English localization strings — must mirror the shape of hebrewStrings
+export const englishStrings: typeof hebrewStrings = {
+  dashboard: {
+    title: "Clinical Dashboard - Dry Eye Treatments",
+    subtitle: "Real-time patient management and symptom monitoring",
+    totalPatients: "Total Patients",
+    needsReview: "Awaiting Review",
+    severeCases: "Severe Cases",
+    improving: "Improving",
+    patientOverview: "Patient Assessment Overview",
+    quickTriageView: "Quick triage view with symptom updates and severity indicators",
+    patient: "Patient",
+    osdiScore: "OSDI Score",
+    severity: "Severity",
+    trend: "Trend",
+    symptoms: "Symptoms",
+    lastVisit: "Last Visit",
+    status: "Status",
+    noPatients: "No patients to display. Awaiting assessments",
+    reviewed: "Reviewed",
+    needsReviewBadge: "Needs Review",
+    pendingSurveys: "Surveys Received",
+    completedSurveys: "Completed Surveys",
+    roiAnalytics: "ROI Analytics",
+  },
+  patient: {
+    backToDashboard: "Back to Dashboard",
+    currentAssessment: "Current Assessment",
+    assessmentHistory: "Assessment History",
+    clinicianNotes: "Clinician Notes",
+    addNote: "Add Note",
+    responseDetails: "Response Details",
+    question: "Question",
+    score: "Score",
+    patientQuote: "Patient Quote",
+    reasoning: "Clinical Assessment",
+    symptoms: "Identified Symptoms",
+    summary: "Summary",
+    chiefComplaint: "Chief Complaint",
+    observations: "Clinical Observations",
+    trend: "Trend",
+    improving: "Improving",
+    worsening: "Worsening",
+    stable: "Stable",
+    osdiScore: "OSDI Score",
+    severity: "Severity",
+    severityLevel: "Severity Level",
+    date: "Date",
+    viewReport: "View Report",
+    viewing: "Now Viewing",
+    markAsReviewed: "Mark as Reviewed",
+    marking: "Updating...",
+    marked: "Marked as Reviewed",
+    close: "Close",
+    screenIntolerance: "Screen Intolerance",
+    nightDrivingIssues: "Night Driving Difficulties",
+    windSensitivity: "Wind Sensitivity",
+    humidityIssues: "Cold/Dry Environment Issues",
+    never: "Never",
+    rarely: "Rarely",
+    sometimes: "Sometimes",
+    often: "Often",
+    always: "Always",
+    yourName: "Your name (optional)",
+    addNoteButton: "Add Note",
+    addingNote: "Adding note...",
+    addNotePlaceholder: "Clinical note...",
+    assessments: "assessments",
+    dateOfBirth: "Date of Birth",
+    notFound: "Patient not found",
+    previousAssessment: "Previous Assessment",
+    latestAssessment: "Latest Assessment",
+    symptomFlags: "Clinical Indicators",
+    symptomFlagsTitle: "Symptom Flags",
+    questionByQuestion: "Question-by-Question Breakdown",
+    clinicalNote: "Clinical Note",
+    noNotes: "No clinical notes",
+    noNotesYet: "No notes added yet",
+    noAssessments: "No assessments available",
+    aiAssessment: "AI",
+    selfSurvey: "Self-Survey",
+    patientResponsesTitle: "Patient Responses (Self-Survey)",
+    patientDescription: "Patient Description",
+    flagScreenShort: "Screen",
+    flagNightShort: "Night",
+    flagWindShort: "Wind",
+    flagHumidityShort: "Humidity",
+    currentView: "Now Viewing",
+    medications: "Medications",
+    medicationHistory: "Medication History",
+    activeMedications: "Active Medications",
+    stoppedMedications: "Stopped Medications",
+    noMedications: "No medications reported",
+    medicationName: "Medication Name",
+    dosage: "Dosage",
+    frequency: "Frequency",
+    startDate: "Start Date",
+    stopDate: "Stop Date",
+    medicationNotes: "Notes",
+    medicationStatus: {
+      active: "Active",
+      stopped: "Stopped",
+      new: "New",
+    },
+  },
+  survey: {
+    title: "Dry Eye Assessment Survey",
+    subtitle: "OSDI Questionnaire - Ocular Surface Disease Index",
+    instructions: "Please answer the following questions honestly. Describe your experience over the past week.",
+    patientInfo: "Patient Information",
+    name: "Full Name",
+    namePlaceholder: "Enter your name",
+    email: "Email (optional)",
+    emailPlaceholder: "example@email.com",
+    phone: "Phone (optional)",
+    phonePlaceholder: "050-0000000",
+    questionsSection: "Assessment Questions",
+    frequencyLabel: "How often did you experience this over the past week?",
+    describeExperience: "Describe your experience in your own words (optional)",
+    descriptionPlaceholder: "Tell us more about what you're experiencing...",
+    frequency: {
+      none: "Never",
+      sometimes: "Sometimes",
+      half: "About half the time",
+      most: "Most of the time",
+      all: "All the time",
+      not_applicable: "Not applicable",
+    },
+    questions: {
+      1: "Have you experienced sensitivity to light?",
+      2: "Have you experienced a gritty or foreign-body sensation in your eyes?",
+      3: "Have you experienced painful or burning eyes?",
+      4: "Have you experienced blurred vision?",
+      5: "Have you experienced poor vision?",
+      6: "Have you had problems reading?",
+      7: "Have you had problems driving at night?",
+      8: "Have you had problems working on a computer or screen?",
+      9: "Have you had problems watching television?",
+      10: "Have you had problems in windy conditions?",
+      11: "Have you had problems in dry or air-conditioned environments?",
+      12: "Have you had problems in areas of low humidity?",
+    },
+    submit: "Submit Survey",
+    submitting: "Submitting...",
+    successTitle: "Survey submitted successfully!",
+    successMessage: "Thank you for completing the survey. Dr. Elad will review your responses shortly.",
+    errorTitle: "Error submitting survey",
+    errorMessage: "An error occurred while submitting the survey. Please try again.",
+    backToHome: "Back to Home",
+    requiredField: "Required field",
+    shareLink: "Survey Link",
+    copyLink: "Copy Link",
+    copiedLink: "Link copied!",
+    shareInstructionPrefix: "Send this link to ",
+    shareInstructionSuffix: " to complete the OSDI survey",
+    greetingPrefix: "Hello",
+    greetingSuffix: ", please complete the following survey.",
+    surveysPageTitle: "Surveys",
+    autoScoredInfo: "Surveys are scored automatically and appear in the patient profile",
+    pendingSurveys: "Surveys Received",
+    completedSurveys: "Completed Surveys",
+    viewSurveys: "View Surveys",
+    scoreSurvey: "Score Survey",
+    surveyFrom: "Survey from",
+    noSurveys: "No pending surveys",
+    assignScore: "Assign Score",
+    saveScores: "Save Scores",
+    savingScores: "Saving...",
+    scoresSaved: "Scores saved",
+    totalCalculated: "Total Calculated",
+    medicationSection: "Medication Update",
+    medicationInstructions:
+      "Please update us on any medications you are currently taking or any changes since your last visit.",
+    anyMedicationChanges: "Have there been any changes to your medications?",
+    yes: "Yes",
+    no: "No",
+    newMedications: "New medications you started",
+    stoppedMedications: "Medications you stopped",
+    continuingMedications: "Medications you are continuing",
+    addMedication: "Add Medication",
+    removeMedication: "Remove",
+    medicationNameLabel: "Medication Name",
+    medicationNamePlaceholder: "e.g., Artificial Tears",
+    dosageLabel: "Dosage (optional)",
+    dosagePlaceholder: "e.g., One drop",
+    frequencyPlaceholder: "e.g., 4 times a day",
+    startDateLabel: "Start Date (optional)",
+    stopDateLabel: "Stop Date (optional)",
+    medicationNotesLabel: "Additional Notes (optional)",
+    medicationNotesPlaceholder: "Any additional information about the medication...",
+  },
+  common: {
+    toggleTheme: "Toggle theme (light/dark)",
+    toggleLanguage: "Toggle language",
+    switchLanguageLabel: "עברית",
+  },
+  roi: {
+    title: "Return on Investment Analysis",
+    subtitle: "Efficiency metrics, clinical outcomes, and business impact",
+    backToDashboard: "Back to Dashboard",
+
+    timeSavings: {
+      title: "Time Savings",
+      subtitle: "Time saved compared to a manual process",
+      totalAssessments: "Total Assessments",
+      minutesSaved: "Minutes Saved",
+      hoursSavedMonth: "Hours Saved This Month",
+      avgTimePerAssessment: "Avg. Time per Assessment",
+      seconds: "seconds",
+      vs: "vs.",
+      minutesManual: "minutes manually",
+      estimatedSavings: "Estimated Savings",
+      perMonth: "per month",
+    },
+
+    clinicalOutcomes: {
+      title: "Clinical Outcomes",
+      subtitle: "Tracking treatment efficacy and patient progress",
+      totalPatients: "Total Patients",
+      improvingPatients: "Improving Patients",
+      improvementRate: "Improvement Rate",
+      avgScoreReduction: "Avg. Score Reduction",
+      points: "points",
+      treatmentSuccess: "Treatment Success",
+      severeImproved: "Severe Cases Improved",
+    },
+
+    revenueOptimization: {
+      title: "Revenue Optimization",
+      subtitle: "Economic impact and clinic capacity",
+      additionalCapacity: "Additional Capacity",
+      patientsPerMonth: "additional patients per month",
+      surveyCompletion: "Survey Completion",
+      followUpCompliance: "Follow-up Compliance",
+      estimatedIncrease: "Estimated Revenue Increase",
+      monthly: "monthly",
+    },
+
+    patientEngagement: {
+      title: "Patient Engagement",
+      subtitle: "Satisfaction and retention metrics",
+      surveysSent: "Surveys Sent",
+      surveysCompleted: "Surveys Completed",
+      completionRate: "Completion Rate",
+      avgResponseTime: "Avg. Response Time",
+      hours: "hours",
+      activePatients: "Active Patients",
+      retentionRate: "Retention Rate",
+    },
+
+    monthlyTrends: "Monthly Trends",
+    assessmentsOverTime: "Assessments over time",
+    outcomeDistribution: "Outcome Distribution",
+    aiAssessments: "AI Assessments",
+    patientSurveys: "Patient Surveys",
+    assessmentsLabel: "assessments",
+    minutesSavedShort: "minutes saved",
+    months: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+
+    last30Days: "Last 30 days",
+    last90Days: "Last 90 days",
+    lastYear: "Last year",
+    allTime: "All time",
+  },
+}
+
+export type Strings = typeof hebrewStrings
+
+export const translations: Record<Locale, Strings> = {
+  he: hebrewStrings,
+  en: englishStrings,
+}
+
+// Direction and Intl locale tag per language
+export const localeDirection: Record<Locale, "rtl" | "ltr"> = {
+  he: "rtl",
+  en: "ltr",
+}
+
+export const localeTag: Record<Locale, string> = {
+  he: "he-IL",
+  en: "en-US",
+}
+
+export function isLocale(value: unknown): value is Locale {
+  return value === "he" || value === "en"
+}
+
+export function getStrings(locale: Locale): Strings {
+  return translations[locale] ?? hebrewStrings
+}
+
+// Backwards-compatible default export of Hebrew strings
 export const t = hebrewStrings
 
 export type FrequencyKey = "none" | "sometimes" | "half" | "most" | "all" | "not_applicable"
 
-export function getSeverityLabel(severity: string): string {
-  const labels: Record<string, string> = {
+const severityLabels: Record<Locale, Record<string, string>> = {
+  he: {
     Normal: "תקין",
     Mild: "קל",
     Moderate: "בינוני",
     Severe: "חמור",
-  }
-  return labels[severity] || severity
+  },
+  en: {
+    Normal: "Normal",
+    Mild: "Mild",
+    Moderate: "Moderate",
+    Severe: "Severe",
+  },
+}
+
+export function getSeverityLabel(severity: string, locale: Locale = "he"): string {
+  return severityLabels[locale]?.[severity] || severity
 }

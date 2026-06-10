@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { AssessmentResponse, ClinicianNote, SurveyResponse } from "@/lib/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -18,10 +18,46 @@ import Link from "next/link"
 import { AddNoteForm } from "@/components/add-note-form"
 import { MarkReviewedButton } from "@/components/mark-reviewed-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
 import { ShareSurveyButton } from "@/components/share-survey-button"
-import { t } from "@/lib/i18n"
+import { getStrings, getSeverityLabel, localeTag, type Locale, type Strings } from "@/lib/i18n"
+import { getLocale } from "@/lib/locale"
+import { getSeedPatientDetail } from "@/lib/seed-data"
 
-async function getPatientDetail(patientId: string, assessmentId?: string) {
+async function getPatientDetail(patientId: string, locale: Locale, assessmentId?: string) {
+  if (!isSupabaseConfigured()) return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
+  try {
+    const result = await fetchPatientDetail(patientId, assessmentId)
+    // Supabase returns errors (not exceptions) for missing rows / invalid ids / RLS,
+    // so a thrown error isn't guaranteed. If the DB yielded no patient, fall back to
+    // seed data when the id is one we have (e.g. the dashboard fell back to seed and
+    // linked to a seed id like "seed-emily").
+    if (!result.patient) {
+      const seed = getSeedPatientDetail(patientId, locale, assessmentId)
+      if (seed) return seed
+    }
+    return result
+  } catch (error) {
+    console.error("Error fetching patient detail:", error)
+    return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
+  }
+}
+
+function seedPatientDetailOrEmpty(patientId: string, locale: Locale, assessmentId?: string) {
+  const seed = getSeedPatientDetail(patientId, locale, assessmentId)
+  if (seed) return seed
+  return {
+    patient: null,
+    assessment: null,
+    assessments: [],
+    responses: [] as AssessmentResponse[],
+    surveyResponses: [] as SurveyResponse[],
+    notes: [] as ClinicianNote[],
+    medications: [],
+  }
+}
+
+async function fetchPatientDetail(patientId: string, assessmentId?: string) {
   const supabase = await createServerClient()
 
   const { data: patient } = await supabase.from("patients").select("*").eq("id", patientId).single()
@@ -131,20 +167,22 @@ function getSeverityColor(severity: string) {
   }
 }
 
-const labels = {
+const scoreLabels: Record<Locale, string[]> = {
   he: ["אף פעם", "לעיתים רחוקות", "לעיתים", "לעתים קרובות", "תמיד"],
+  en: ["Never", "Rarely", "Sometimes", "Often", "Always"],
 }
 
-function getScoreLabel(score: number): string {
-  return labels.he[score] || "לא ידוע"
+function getScoreLabel(score: number, locale: Locale): string {
+  return scoreLabels[locale][score] || (locale === "he" ? "לא ידוע" : "Unknown")
 }
 
-function getTrendIndicator(currentScore: number, previousScore: number | null) {
+function getTrendIndicator(currentScore: number, previousScore: number | null, t: Strings) {
   if (previousScore === null) return null
   const diff = currentScore - previousScore
-  if (diff > 5) return { icon: TrendingUpIcon, label: "מתדרדר", color: "text-red-600 dark:text-red-400" }
-  if (diff < -5) return { icon: TrendingDownIcon, label: "משתפר", color: "text-emerald-600 dark:text-emerald-400" }
-  return { icon: MinusIcon, label: "יציב", color: "text-gray-600 dark:text-gray-400" }
+  if (diff > 5) return { icon: TrendingUpIcon, label: t.patient.worsening, color: "text-red-600 dark:text-red-400" }
+  if (diff < -5)
+    return { icon: TrendingDownIcon, label: t.patient.improving, color: "text-emerald-600 dark:text-emerald-400" }
+  return { icon: MinusIcon, label: t.patient.stable, color: "text-gray-600 dark:text-gray-400" }
 }
 
 export default async function PatientDetailPage({
@@ -156,18 +194,23 @@ export default async function PatientDetailPage({
 }) {
   const { id } = await params
   const { assessment: assessmentId } = await searchParams
+  const locale = await getLocale()
+  const t = getStrings(locale)
   const { patient, assessment, assessments, responses, surveyResponses, notes, medications } = await getPatientDetail(
     id,
+    locale,
     assessmentId,
   )
 
   if (!patient) {
-    return <div className="p-6"> החולה לא נמצא</div>
+    return <div className="p-6"> {t.patient.notFound}</div>
   }
 
   const previousAssessment = assessments[1] || null
   const trend =
-    assessment && previousAssessment ? getTrendIndicator(assessment.total_score, previousAssessment.total_score) : null
+    assessment && previousAssessment
+      ? getTrendIndicator(assessment.total_score, previousAssessment.total_score, t)
+      : null
 
   const activeMedications = medications.filter((m) => m.status === "active" || m.status === "new")
   const stoppedMedications = medications.filter((m) => m.status === "stopped")
@@ -179,10 +222,13 @@ export default async function PatientDetailPage({
           <Link href="/dashboard">
             <Button variant="ghost" className="gap-2">
               <ArrowLeftIcon className="size-4" />
-              חזרה ללוח הבקרה
+              {t.patient.backToDashboard}
             </Button>
           </Link>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
         <Card className="border-border bg-card shadow-sm">
@@ -192,11 +238,15 @@ export default async function PatientDetailPage({
                 <CardTitle className="text-3xl font-bold">{patient.name}</CardTitle>
                 <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
                   {patient.date_of_birth && (
-                    <span>ת. לידה: {new Date(patient.date_of_birth).toLocaleDateString("he-IL")}</span>
+                    <span>
+                      {t.patient.dateOfBirth}: {new Date(patient.date_of_birth).toLocaleDateString(localeTag[locale])}
+                    </span>
                   )}
                   {patient.email && <span>{patient.email}</span>}
                   {patient.phone && <span>{patient.phone}</span>}
-                  <span className="font-medium text-foreground">{assessments.length} הערכות</span>
+                  <span className="font-medium text-foreground">
+                    {assessments.length} {t.patient.assessments}
+                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -220,10 +270,10 @@ export default async function PatientDetailPage({
                           </div>
                         )}
                       </div>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">ניקוד OSDI</div>
+                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.osdiScore}</div>
                       {previousAssessment && (
                         <div className="mt-1 text-xs text-muted-foreground">
-                          הערכה קודמת: {previousAssessment.total_score}
+                          {t.patient.previousAssessment}: {previousAssessment.total_score}
                         </div>
                       )}
                     </CardContent>
@@ -231,21 +281,21 @@ export default async function PatientDetailPage({
                   <Card className="border-border bg-accent/30 shadow-sm transition-all hover:shadow-md">
                     <CardContent className="pt-6">
                       <Badge className={`text-base font-semibold ${getSeverityColor(assessment.severity_level)}`}>
-                        {assessment.severity_level}
+                        {getSeverityLabel(assessment.severity_level, locale)}
                       </Badge>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">רמת חומרה</div>
+                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.severityLevel}</div>
                     </CardContent>
                   </Card>
                   <Card className="border-border bg-accent/30 shadow-sm transition-all hover:shadow-md">
                     <CardContent className="pt-6">
                       <div className="text-lg font-semibold text-foreground">
-                        {new Date(assessment.date).toLocaleDateString("he-IL", {
+                        {new Date(assessment.date).toLocaleDateString(localeTag[locale], {
                           month: "long",
                           day: "numeric",
                           year: "numeric",
                         })}
                       </div>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">הערכה אחרונה</div>
+                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.latestAssessment}</div>
                     </CardContent>
                   </Card>
                 </div>
@@ -262,7 +312,7 @@ export default async function PatientDetailPage({
                   <TabsContent value="current" className="space-y-6 mt-6">
                     <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">דגלי תסמינים</CardTitle>
+                        <CardTitle className="text-xl">{t.patient.symptomFlagsTitle}</CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="grid gap-4 sm:grid-cols-2">
@@ -285,7 +335,7 @@ export default async function PatientDetailPage({
                                 assessment.has_screen_intolerance ? "text-foreground" : "text-muted-foreground"
                               }`}
                             >
-                              אי-סובלנות למסך
+                              {t.patient.screenIntolerance}
                             </span>
                           </div>
                           <div
@@ -307,7 +357,7 @@ export default async function PatientDetailPage({
                                 assessment.has_night_driving_issues ? "text-foreground" : "text-muted-foreground"
                               }`}
                             >
-                              בעיות בנהיגה בלילה
+                              {t.patient.nightDrivingIssues}
                             </span>
                           </div>
                           <div
@@ -329,7 +379,7 @@ export default async function PatientDetailPage({
                                 assessment.has_wind_sensitivity ? "text-foreground" : "text-muted-foreground"
                               }`}
                             >
-                              רגישות לרוח
+                              {t.patient.windSensitivity}
                             </span>
                           </div>
                           <div
@@ -351,7 +401,7 @@ export default async function PatientDetailPage({
                                 assessment.has_low_humidity_issues ? "text-foreground" : "text-muted-foreground"
                               }`}
                             >
-                              בעיות בלחות נמוכה
+                              {t.patient.humidityIssues}
                             </span>
                           </div>
                         </div>
@@ -372,7 +422,7 @@ export default async function PatientDetailPage({
                                   {response.question_text}
                                 </div>
                                 <Badge variant="outline" className="shrink-0 font-semibold">
-                                  {response.patient_response}/4 - {getScoreLabel(response.patient_response)}
+                                  {response.patient_response}/4 - {getScoreLabel(response.patient_response, locale)}
                                 </Badge>
                               </div>
                               {response.patient_quote && (
@@ -380,7 +430,8 @@ export default async function PatientDetailPage({
                               )}
                               {response.reasoning && (
                                 <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium text-foreground">הערה קלינית:</span> {response.reasoning}
+                                  <span className="font-medium text-foreground">{t.patient.clinicalNote}:</span>{" "}
+                                  {response.reasoning}
                                 </div>
                               )}
                             </div>
@@ -393,7 +444,7 @@ export default async function PatientDetailPage({
                       <Card className="border-border bg-card shadow-sm">
                         <CardHeader>
                           <CardTitle className="text-xl font-semibold text-foreground">
-                            תשובות מטופל (סקר עצמי)
+                            {t.patient.patientResponsesTitle}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -401,20 +452,20 @@ export default async function PatientDetailPage({
                             <div key={response.id} className="border-b border-border pb-4 last:border-0">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="text-sm font-medium text-foreground">
-                                  שאלה {response.question_number}
+                                  {t.patient.question} {response.question_number}
                                 </div>
                                 <Badge variant="outline" className="text-xs">
-                                  ציון: {response.assigned_score}/4
+                                  {t.patient.score}: {response.assigned_score}/4
                                 </Badge>
                               </div>
                               <div className="space-y-2">
                                 <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium">תדירות:</span>{" "}
+                                  <span className="font-medium">{t.patient.frequency}:</span>{" "}
                                   {t.survey.frequency[response.frequency as keyof typeof t.survey.frequency]}
                                 </div>
                                 {response.free_text && (
                                   <div className="text-sm bg-muted p-3 rounded-md">
-                                    <span className="font-medium text-foreground">תיאור המטופל:</span>
+                                    <span className="font-medium text-foreground">{t.patient.patientDescription}:</span>
                                     <p className="mt-1 text-muted-foreground">{response.free_text}</p>
                                   </div>
                                 )}
@@ -427,7 +478,7 @@ export default async function PatientDetailPage({
 
                     <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">הערות קליניות</CardTitle>
+                        <CardTitle className="text-xl">{t.patient.clinicianNotes}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {notes.length > 0 ? (
@@ -443,7 +494,7 @@ export default async function PatientDetailPage({
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-muted-foreground">עדיין לא נוספו הערות</p>
+                          <p className="text-sm text-muted-foreground">{t.patient.noNotesYet}</p>
                         )}
                         <AddNoteForm assessmentId={assessment.id} />
                       </CardContent>
@@ -454,7 +505,7 @@ export default async function PatientDetailPage({
                   <TabsContent value="history" className="space-y-4 mt-6">
                     {assessments.map((hist, index) => {
                       const prevHist = assessments[index + 1] || null
-                      const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score) : null
+                      const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score, t) : null
                       const isSelected = assessment?.id === hist.id
 
                       return (
@@ -468,10 +519,10 @@ export default async function PatientDetailPage({
                                 <div className="flex items-center gap-4">
                                   <div className="text-3xl font-bold text-foreground">{hist.total_score}</div>
                                   <Badge className={`text-sm ${getSeverityColor(hist.severity_level)}`}>
-                                    {hist.severity_level}
+                                    {getSeverityLabel(hist.severity_level, locale)}
                                   </Badge>
                                   <Badge variant="secondary" className="text-xs">
-                                    {hist.type === "ai" ? "בינה מלאכותית" : "סקר עצמי"}
+                                    {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
                                   </Badge>
                                   {histTrend && (
                                     <div className={`flex items-center gap-1 ${histTrend.color}`}>
@@ -481,12 +532,12 @@ export default async function PatientDetailPage({
                                   )}
                                   {isSelected && (
                                     <Badge variant="outline" className="text-xs">
-                                      מוצג כעת
+                                      {t.patient.viewing}
                                     </Badge>
                                   )}
                                 </div>
                                 <div className="text-sm text-muted-foreground">
-                                  {new Date(hist.date).toLocaleDateString("he-IL", {
+                                  {new Date(hist.date).toLocaleDateString(localeTag[locale], {
                                     month: "long",
                                     day: "numeric",
                                     year: "numeric",
@@ -497,25 +548,25 @@ export default async function PatientDetailPage({
                                   {hist.has_screen_intolerance && (
                                     <Badge variant="outline" className="text-xs">
                                       <MonitorIcon className="size-3 mr-1" />
-                                      מסך
+                                      {t.patient.flagScreenShort}
                                     </Badge>
                                   )}
                                   {hist.has_night_driving_issues && (
                                     <Badge variant="outline" className="text-xs">
                                       <MoonIcon className="size-3 mr-1" />
-                                      לילה
+                                      {t.patient.flagNightShort}
                                     </Badge>
                                   )}
                                   {hist.has_wind_sensitivity && (
                                     <Badge variant="outline" className="text-xs">
                                       <WindIcon className="size-3 mr-1" />
-                                      רוח
+                                      {t.patient.flagWindShort}
                                     </Badge>
                                   )}
                                   {hist.has_low_humidity_issues && (
                                     <Badge variant="outline" className="text-xs">
                                       <DropletIcon className="size-3 mr-1" />
-                                      אטמוספירה נמוכה
+                                      {t.patient.flagHumidityShort}
                                     </Badge>
                                   )}
                                 </div>
@@ -526,7 +577,7 @@ export default async function PatientDetailPage({
                                 asChild
                                 className="hover:bg-accent transition-colors bg-transparent"
                               >
-                                <Link href={`/patient/${id}?assessment=${hist.id}`}>צפה בדוח</Link>
+                                <Link href={`/patient/${id}?assessment=${hist.id}`}>{t.patient.viewReport}</Link>
                               </Button>
                             </div>
                           </CardContent>
@@ -571,7 +622,7 @@ export default async function PatientDetailPage({
                                       {med.start_date && (
                                         <div>
                                           <span className="font-medium">{t.patient.startDate}:</span>{" "}
-                                          {new Date(med.start_date).toLocaleDateString("he-IL")}
+                                          {new Date(med.start_date).toLocaleDateString(localeTag[locale])}
                                         </div>
                                       )}
                                     </div>
@@ -617,7 +668,7 @@ export default async function PatientDetailPage({
                                       {med.stop_date && (
                                         <div>
                                           <span className="font-medium">{t.patient.stopDate}:</span>{" "}
-                                          {new Date(med.stop_date).toLocaleDateString("he-IL")}
+                                          {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}
                                         </div>
                                       )}
                                     </div>
@@ -639,7 +690,7 @@ export default async function PatientDetailPage({
                   <TabsContent value="notes" className="space-y-6 mt-6">
                     <Card className="border-border bg-card shadow-sm">
                       <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">הערות קליניות</CardTitle>
+                        <CardTitle className="text-xl">{t.patient.clinicianNotes}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         {notes.length > 0 ? (
@@ -655,7 +706,7 @@ export default async function PatientDetailPage({
                             </div>
                           ))
                         ) : (
-                          <p className="text-sm text-muted-foreground">עדיין לא נוספו הערות</p>
+                          <p className="text-sm text-muted-foreground">{t.patient.noNotesYet}</p>
                         )}
                         <AddNoteForm assessmentId={assessment.id} />
                       </CardContent>

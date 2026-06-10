@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Share2Icon, CheckIcon, CopyIcon } from "lucide-react"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { useLocale } from "@/components/locale-provider"
 
 interface ShareSurveyButtonProps {
   patientId?: string
@@ -21,6 +21,7 @@ interface ShareSurveyButtonProps {
 
 export function ShareSurveyButton({ patientId, patientName }: ShareSurveyButtonProps) {
   const [copied, setCopied] = useState(false)
+  const { t } = useLocale()
 
   const surveyUrl =
     typeof window !== "undefined"
@@ -53,7 +54,9 @@ export function ShareSurveyButton({ patientId, patientName }: ShareSurveyButtonP
         <DialogHeader>
           <DialogTitle>{t.survey.shareLink}</DialogTitle>
           <DialogDescription>
-            {patientName ? `שלח קישור זה ל${patientName} למילוי שאלון OSDI` : t.survey.subtitle}
+            {patientName
+              ? `${t.survey.shareInstructionPrefix}${patientName}${t.survey.shareInstructionSuffix}`
+              : t.survey.subtitle}
           </DialogDescription>
         </DialogHeader>
         <div className="flex gap-2">

@@ -5,10 +5,12 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client"
 import { useRouter } from "next/navigation"
 import { CheckCircleIcon } from "lucide-react"
 import { useState } from "react"
+import { useLocale } from "@/components/locale-provider"
 
 export function MarkReviewedButton({ assessmentId }: { assessmentId: string }) {
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
+  const { t } = useLocale()
 
   const handleMarkReviewed = async () => {
     setIsLoading(true)
@@ -26,7 +28,7 @@ export function MarkReviewedButton({ assessmentId }: { assessmentId: string }) {
   return (
     <Button onClick={handleMarkReviewed} disabled={isLoading}>
       <CheckCircleIcon />
-      {isLoading ? "מסמן..." : "סמן כנבדק"}
+      {isLoading ? t.patient.marking : t.patient.markAsReviewed}
     </Button>
   )
 }

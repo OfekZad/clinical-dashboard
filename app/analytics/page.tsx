@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
@@ -20,10 +20,23 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { LanguageToggle } from "@/components/language-toggle"
+import { getStrings, localeTag, type Locale } from "@/lib/i18n"
+import { getLocale } from "@/lib/locale"
+import { getSeedROIMetrics, getSeedMonthlyTrends } from "@/lib/seed-data"
 import type { ROIMetrics, MonthlyTrend } from "@/lib/types"
 
 async function getROIMetrics(): Promise<ROIMetrics> {
+  if (!isSupabaseConfigured()) return getSeedROIMetrics()
+  try {
+    return await fetchROIMetrics()
+  } catch (error) {
+    console.error("Error fetching ROI metrics:", error)
+    return getSeedROIMetrics()
+  }
+}
+
+async function fetchROIMetrics(): Promise<ROIMetrics> {
   const supabase = await createServerClient()
 
   // Get all assessments
@@ -137,7 +150,17 @@ async function getROIMetrics(): Promise<ROIMetrics> {
   }
 }
 
-async function getMonthlyTrends(): Promise<MonthlyTrend[]> {
+async function getMonthlyTrends(locale: Locale): Promise<MonthlyTrend[]> {
+  if (!isSupabaseConfigured()) return getSeedMonthlyTrends(locale)
+  try {
+    return await fetchMonthlyTrends(locale)
+  } catch (error) {
+    console.error("Error fetching monthly trends:", error)
+    return getSeedMonthlyTrends(locale)
+  }
+}
+
+async function fetchMonthlyTrends(locale: Locale): Promise<MonthlyTrend[]> {
   const supabase = await createServerClient()
 
   const sixMonthsAgo = new Date()
@@ -157,7 +180,7 @@ async function getMonthlyTrends(): Promise<MonthlyTrend[]> {
   // Group by month
   const monthlyData: Record<string, MonthlyTrend> = {}
 
-  const months = ["ינו׳", "פבר׳", "מרץ", "אפר׳", "מאי", "יוני", "יולי", "אוג׳", "ספט׳", "אוק׳", "נוב׳", "דצמ׳"]
+  const months = getStrings(locale).roi.months
 
   for (let i = 5; i >= 0; i--) {
     const date = new Date()
@@ -193,8 +216,8 @@ async function getMonthlyTrends(): Promise<MonthlyTrend[]> {
   return Object.values(monthlyData)
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("he-IL", {
+function formatCurrency(amount: number, locale: Locale): string {
+  return new Intl.NumberFormat(localeTag[locale], {
     style: "currency",
     currency: "ILS",
     maximumFractionDigits: 0,
@@ -202,7 +225,9 @@ function formatCurrency(amount: number): string {
 }
 
 export default async function AnalyticsPage() {
-  const [metrics, trends] = await Promise.all([getROIMetrics(), getMonthlyTrends()])
+  const locale = await getLocale()
+  const t = getStrings(locale)
+  const [metrics, trends] = await Promise.all([getROIMetrics(), getMonthlyTrends(locale)])
 
   const maxTrend = Math.max(...trends.map((t) => t.assessments + t.surveys), 1)
 
@@ -227,6 +252,7 @@ export default async function AnalyticsPage() {
               <CalendarIcon className="size-3" />
               {t.roi.allTime}
             </Badge>
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>
@@ -300,7 +326,7 @@ export default async function AnalyticsPage() {
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">{t.roi.timeSavings.estimatedSavings}</p>
                     <p className="font-mono text-3xl font-bold text-success">
-                      {formatCurrency(metrics.timeSavings.estimatedMonthlySavings)}
+                      {formatCurrency(metrics.timeSavings.estimatedMonthlySavings, locale)}
                     </p>
                     <p className="text-xs text-muted-foreground">{t.roi.timeSavings.perMonth}</p>
                   </div>
@@ -480,7 +506,7 @@ export default async function AnalyticsPage() {
                       {t.roi.revenueOptimization.estimatedIncrease}
                     </p>
                     <p className="font-mono text-3xl font-bold text-warning">
-                      {formatCurrency(metrics.revenueOptimization.estimatedRevenueIncrease)}
+                      {formatCurrency(metrics.revenueOptimization.estimatedRevenueIncrease, locale)}
                     </p>
                     <p className="text-xs text-muted-foreground">{t.roi.revenueOptimization.monthly}</p>
                   </div>
@@ -597,7 +623,8 @@ export default async function AnalyticsPage() {
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{trend.month}</span>
                     <span className="text-muted-foreground">
-                      {trend.assessments + trend.surveys} הערכות | {Math.round(trend.timeSaved)} דקות נחסכו
+                      {trend.assessments + trend.surveys} {t.roi.assessmentsLabel} | {Math.round(trend.timeSaved)}{" "}
+                      {t.roi.minutesSavedShort}
                     </span>
                   </div>
                   <div className="flex gap-1 h-8">
@@ -607,7 +634,7 @@ export default async function AnalyticsPage() {
                         width: `${(trend.assessments / maxTrend) * 50}%`,
                         minWidth: trend.assessments > 0 ? "8px" : "0",
                       }}
-                      title={`הערכות AI: ${trend.assessments}`}
+                      title={`${t.roi.aiAssessments}: ${trend.assessments}`}
                     />
                     <div
                       className="bg-info rounded-sm transition-all"
@@ -615,7 +642,7 @@ export default async function AnalyticsPage() {
                         width: `${(trend.surveys / maxTrend) * 50}%`,
                         minWidth: trend.surveys > 0 ? "8px" : "0",
                       }}
-                      title={`שאלונים: ${trend.surveys}`}
+                      title={`${t.roi.patientSurveys}: ${trend.surveys}`}
                     />
                   </div>
                 </div>
@@ -623,11 +650,11 @@ export default async function AnalyticsPage() {
               <div className="flex items-center gap-4 pt-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
                   <div className="size-3 rounded-sm bg-primary" />
-                  <span>הערכות AI</span>
+                  <span>{t.roi.aiAssessments}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="size-3 rounded-sm bg-info" />
-                  <span>שאלוני מטופלים</span>
+                  <span>{t.roi.patientSurveys}</span>
                 </div>
               </div>
             </div>

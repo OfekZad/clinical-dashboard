@@ -9,8 +9,9 @@ import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CheckCircleIcon, EyeIcon, Loader2Icon, PlusIcon, XIcon } from "lucide-react"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { useLocale } from "@/components/locale-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
 import type { MedicationUpdate } from "@/lib/types"
 
 type FrequencyValue = "none" | "sometimes" | "half" | "most" | "all" | "not_applicable"
@@ -35,6 +36,7 @@ type PatientInfo = {
 
 export default function PatientSurveyPage({ params }: { params: Promise<{ patientId: string }> }) {
   const { patientId } = use(params)
+  const { t } = useLocale()
   const [patient, setPatient] = useState<PatientInfo | null>(null)
   const [loading, setLoading] = useState(true)
   const [formData, setFormData] = useState<SurveyFormData>({
@@ -216,14 +218,18 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
             </div>
             <p className="text-muted-foreground">{t.survey.subtitle}</p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
         {patient && (
           <Card className="border-primary/20 bg-primary/5">
             <CardContent className="p-4">
               <p className="text-lg">
-                שלום <span className="font-bold">{patient.name}</span>, אנא מלא את השאלון הבא.
+                {t.survey.greetingPrefix} <span className="font-bold">{patient.name}</span>
+                {t.survey.greetingSuffix}
               </p>
             </CardContent>
           </Card>
@@ -425,6 +431,7 @@ function MedicationForm({
   showStartDate?: boolean
   showStopDate?: boolean
 }) {
+  const { t } = useLocale()
   return (
     <div className="space-y-3 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-2">
