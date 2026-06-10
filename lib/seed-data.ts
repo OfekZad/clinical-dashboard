@@ -124,6 +124,12 @@ const SEED_RECORDS: SeedPatientRecord[] = [
         has_screen_intolerance: true,
         has_low_humidity_issues: true,
       }, true),
+      makeAssessment("seed-sarah-a0", "seed-sarah", 70, 95, "Severe", {
+        has_screen_intolerance: true,
+        has_night_driving_issues: true,
+        has_wind_sensitivity: true,
+        has_low_humidity_issues: true,
+      }, true),
     ],
     responses: [
       {
@@ -174,6 +180,90 @@ const SEED_RECORDS: SeedPatientRecord[] = [
         },
         reasoning: { he: "זמן מסך מחמיר את התסמינים", en: "Screen time exacerbates symptoms" },
       },
+      {
+        question_number: 6,
+        patient_response: 3,
+        quote: {
+          he: "קשה לי לקרוא יותר מכמה דקות לפני שהעיניים נשרפות",
+          en: "I can't read for more than a few minutes before my eyes burn",
+        },
+        reasoning: {
+          he: "התסמינים מחמירים בקריאה ממושכת",
+          en: "Symptoms worsen with sustained reading",
+        },
+      },
+      {
+        question_number: 7,
+        patient_response: 4,
+        quote: {
+          he: "הילות סביב פנסים מקשות עליי מאוד לנהוג בלילה",
+          en: "Halos around headlights make night driving very difficult",
+        },
+        reasoning: {
+          he: "פיזור אור עקב חוסר יציבות בשכבת הדמעות",
+          en: "Light scatter from an unstable tear film",
+        },
+      },
+      {
+        question_number: 8,
+        patient_response: 4,
+        quote: {
+          he: "אחרי שעה מול המסך העיניים שלי אדומות ויבשות",
+          en: "After an hour at the screen my eyes are red and dry",
+        },
+        reasoning: {
+          he: "ירידה בקצב המצמוץ מול מסך מחמירה את היובש",
+          en: "Reduced blink rate at screens worsens the dryness",
+        },
+      },
+      {
+        question_number: 9,
+        patient_response: 2,
+        quote: {
+          he: "לפעמים אני צריכה לעצום עיניים באמצע צפייה בטלוויזיה",
+          en: "Sometimes I have to close my eyes while watching TV",
+        },
+        reasoning: {
+          he: "אי-נוחות מתונה בצפייה ממושכת",
+          en: "Moderate discomfort during prolonged viewing",
+        },
+      },
+      {
+        question_number: 10,
+        patient_response: 3,
+        quote: {
+          he: "רוח גורמת לי לדמעות ולצריבה מיידית",
+          en: "Wind causes immediate tearing and burning",
+        },
+        reasoning: {
+          he: "רגישות סביבתית האופיינית ליובש בינוני-חמור",
+          en: "Environmental sensitivity typical of moderate-to-severe dry eye",
+        },
+      },
+      {
+        question_number: 11,
+        patient_response: 4,
+        quote: {
+          he: "מיזוג האוויר במשרד הורס לי את היום",
+          en: "The office air-conditioning ruins my day",
+        },
+        reasoning: {
+          he: "סביבה יבשה מאיצה את אידוי הדמעות",
+          en: "Dry environments accelerate tear evaporation",
+        },
+      },
+      {
+        question_number: 12,
+        patient_response: 3,
+        quote: {
+          he: "בימים יבשים אני מטפטפת דמעות מלאכותיות כל שעה",
+          en: "On dry days I use artificial tears every hour",
+        },
+        reasoning: {
+          he: "תלות גבוהה בתחליפי דמעות בתנאי לחות נמוכה",
+          en: "High reliance on tear substitutes in low humidity",
+        },
+      },
     ],
     notes: [
       {
@@ -184,6 +274,15 @@ const SEED_RECORDS: SeedPatientRecord[] = [
         },
         created_by: "Dr. Elad",
         created_at: daysAgo(2),
+      },
+      {
+        id: "seed-sarah-note-2",
+        note_text: {
+          he: "המטופלת החלה טיפול בטיפות ציקלוספורין והומלץ להפסיק עדשות מגע למשך החודש הקרוב. דמעות מלאכותיות ללא חומר משמר לפי הצורך.",
+          en: "Patient started cyclosporine drops; advised to stop contact lenses for the next month. Preservative-free artificial tears as needed.",
+        },
+        created_by: "Dr. Elad",
+        created_at: daysAgo(20),
       },
     ],
     medications: [
