@@ -1,4 +1,4 @@
-import { createServerClient } from "@/lib/supabase/server"
+import { createServerClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { PatientWithLatestAssessment } from "@/lib/types"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -20,26 +20,44 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { LanguageToggle } from "@/components/language-toggle"
+import { getStrings, getSeverityLabel, localeTag, type Locale } from "@/lib/i18n"
+import { getLocale } from "@/lib/locale"
+import { getSeedDashboardPatients, SEED_PENDING_SURVEYS_COUNT } from "@/lib/seed-data"
 import { ShareSurveyButton } from "@/components/share-survey-button"
 
 async function getPendingSurveysCount(): Promise<number> {
-  const supabase = await createServerClient()
-  const { count } = await supabase
-    .from("patient_surveys")
-    .select("*", { count: "exact", head: true })
-    .eq("status", "pending")
-  return count || 0
+  if (!isSupabaseConfigured()) return SEED_PENDING_SURVEYS_COUNT
+  try {
+    const supabase = await createServerClient()
+    const { count, error } = await supabase
+      .from("patient_surveys")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "pending")
+    if (error) return SEED_PENDING_SURVEYS_COUNT
+    return count || 0
+  } catch (error) {
+    console.error("Error fetching pending surveys count:", error)
+    return SEED_PENDING_SURVEYS_COUNT
+  }
 }
 
 async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]> {
-  const supabase = await createServerClient()
+  if (!isSupabaseConfigured()) return getSeedDashboardPatients()
+
+  let supabase
+  try {
+    supabase = await createServerClient()
+  } catch (error) {
+    console.error("Error creating Supabase client:", error)
+    return getSeedDashboardPatients()
+  }
 
   const { data: patients, error } = await supabase.from("patients").select("*").order("name", { ascending: true })
 
   if (error) {
     console.error("Error fetching patients:", error)
-    return []
+    return getSeedDashboardPatients()
   }
 
   const patientsWithAssessments = await Promise.all(
@@ -141,8 +159,8 @@ function getTrendIndicator(latest: number, previous?: number) {
   return <MinusIcon className="size-4 text-muted-foreground" />
 }
 
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("he-IL", {
+function formatDate(date: string, locale: Locale) {
+  return new Date(date).toLocaleDateString(localeTag[locale], {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -150,6 +168,8 @@ function formatDate(date: string) {
 }
 
 export default async function DashboardPage() {
+  const locale = await getLocale()
+  const t = getStrings(locale)
   const [patients, pendingSurveys] = await Promise.all([getPatientDashboardData(), getPendingSurveysCount()])
 
   const totalPatients = patients.length
@@ -178,6 +198,7 @@ export default async function DashboardPage() {
               </button>
             </Link>
             <ShareSurveyButton />
+            <LanguageToggle />
             <ThemeToggle />
           </div>
         </div>
@@ -290,7 +311,7 @@ export default async function DashboardPage() {
                                 </div>
                                 {patient.date_of_birth && (
                                   <div className="text-xs text-muted-foreground">
-                                    {new Date(patient.date_of_birth).toLocaleDateString("he-IL")}
+                                    {new Date(patient.date_of_birth).toLocaleDateString(localeTag[locale])}
                                   </div>
                                 )}
                               </div>
@@ -309,7 +330,7 @@ export default async function DashboardPage() {
                           <TableCell>
                             {assessment ? (
                               <Badge variant="outline" className={getSeverityColor(assessment.severity_level)}>
-                                {assessment.severity_level}
+                                {getSeverityLabel(assessment.severity_level, locale)}
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground">—</span>
@@ -343,7 +364,7 @@ export default async function DashboardPage() {
                             </div>
                           </TableCell>
                           <TableCell className="text-muted-foreground">
-                            {assessment ? formatDate(assessment.assessment_date) : "—"}
+                            {assessment ? formatDate(assessment.assessment_date, locale) : "—"}
                           </TableCell>
                           <TableCell>
                             {assessment ? (

@@ -10,8 +10,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { CheckCircleIcon, EyeIcon } from "lucide-react"
-import { hebrewStrings as t } from "@/lib/i18n"
+import { useLocale } from "@/components/locale-provider"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { LanguageToggle } from "@/components/language-toggle"
 
 type FrequencyValue = "none" | "sometimes" | "half" | "most" | "all" | "not_applicable"
 
@@ -28,6 +29,7 @@ type SurveyFormData = {
 }
 
 export default function SurveyPage() {
+  const { t } = useLocale()
   const [formData, setFormData] = useState<SurveyFormData>({
     name: "",
     email: "",
@@ -135,7 +137,10 @@ export default function SurveyPage() {
             </div>
             <p className="text-muted-foreground">{t.survey.subtitle}</p>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
 
         <Card>
