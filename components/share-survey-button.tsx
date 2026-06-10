@@ -1,0 +1,69 @@
+"use client"
+
+import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Share2Icon, CheckIcon, CopyIcon } from "lucide-react"
+import { hebrewStrings as t } from "@/lib/i18n"
+
+interface ShareSurveyButtonProps {
+  patientId?: string
+  patientName?: string
+}
+
+export function ShareSurveyButton({ patientId, patientName }: ShareSurveyButtonProps) {
+  const [copied, setCopied] = useState(false)
+
+  const surveyUrl =
+    typeof window !== "undefined"
+      ? patientId
+        ? `${window.location.origin}/survey/${patientId}`
+        : `${window.location.origin}/survey`
+      : patientId
+        ? `/survey/${patientId}`
+        : "/survey"
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(surveyUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy:", err)
+    }
+  }
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
+          <Share2Icon className="size-4" />
+          {t.survey.shareLink}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t.survey.shareLink}</DialogTitle>
+          <DialogDescription>
+            {patientName ? `שלח קישור זה ל${patientName} למילוי שאלון OSDI` : t.survey.subtitle}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex gap-2">
+          <Input value={surveyUrl} readOnly dir="ltr" className="text-left font-mono text-sm" />
+          <Button onClick={handleCopy} variant="outline" size="icon">
+            {copied ? <CheckIcon className="size-4 text-success" /> : <CopyIcon className="size-4" />}
+          </Button>
+        </div>
+        {copied && <p className="text-sm text-success">{t.survey.copiedLink}</p>}
+      </DialogContent>
+    </Dialog>
+  )
+}
