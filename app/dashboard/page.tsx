@@ -194,7 +194,7 @@ export default async function DashboardPage() {
             <Link href="/analytics">
               <button className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-accent transition-colors">
                 <BarChart3Icon className="size-4" />
-                {t.dashboard.roiAnalytics || "ניתוח ROI"}
+                {t.dashboard.roiAnalytics}
               </button>
             </Link>
             <ShareSurveyButton />

@@ -27,7 +27,16 @@ import { getSeedPatientDetail } from "@/lib/seed-data"
 async function getPatientDetail(patientId: string, locale: Locale, assessmentId?: string) {
   if (!isSupabaseConfigured()) return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
   try {
-    return await fetchPatientDetail(patientId, assessmentId)
+    const result = await fetchPatientDetail(patientId, assessmentId)
+    // Supabase returns errors (not exceptions) for missing rows / invalid ids / RLS,
+    // so a thrown error isn't guaranteed. If the DB yielded no patient, fall back to
+    // seed data when the id is one we have (e.g. the dashboard fell back to seed and
+    // linked to a seed id like "seed-emily").
+    if (!result.patient) {
+      const seed = getSeedPatientDetail(patientId, locale, assessmentId)
+      if (seed) return seed
+    }
+    return result
   } catch (error) {
     console.error("Error fetching patient detail:", error)
     return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
