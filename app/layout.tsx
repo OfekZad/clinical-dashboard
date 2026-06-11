@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LocaleProvider } from "@/components/locale-provider"
+import { DataCacheProvider } from "@/lib/cache/cache-context"
 import "./globals.css"
 
 // 🔥 OPTIMIZATION: font-display: swap prevents the font from blocking
@@ -72,7 +73,9 @@ export default function RootLayout({
     <html lang="en" dir="ltr" className="light bg-background" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ThemeProvider defaultTheme="light">
-          <LocaleProvider>{children}</LocaleProvider>
+          <LocaleProvider>
+            <DataCacheProvider>{children}</DataCacheProvider>
+          </LocaleProvider>
         </ThemeProvider>
         <Analytics />
       </body>
