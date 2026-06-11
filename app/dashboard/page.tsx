@@ -1,16 +1,8 @@
 import { createServerClient, isSupabaseConfigured } from "@/lib/supabase/server"
 import type { PatientWithLatestAssessment } from "@/lib/types"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
+import { Table, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  TrendingUpIcon,
-  TrendingDownIcon,
-  MinusIcon,
-  MonitorIcon,
-  MoonIcon,
-  WindIcon,
-  DropletIcon,
   ActivityIcon,
   UsersIcon,
   AlertCircleIcon,
@@ -18,13 +10,13 @@ import {
   ClipboardListIcon,
   BarChart3Icon,
 } from "lucide-react"
-import Link from "next/link"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
-import { getStrings, getSeverityLabel, localeTag, type Locale } from "@/lib/i18n"
+import { getStrings, localeTag, type Locale } from "@/lib/i18n"
 import { getLocale } from "@/lib/locale"
 import { getSeedDashboardPatients, SEED_PENDING_SURVEYS_COUNT } from "@/lib/seed-data"
 import { ShareSurveyButton } from "@/components/share-survey-button"
+import { DashboardTableClient } from "@/components/dashboard-table-client"
 
 async function getPendingSurveysCount(): Promise<number> {
   if (!isSupabaseConfigured()) return SEED_PENDING_SURVEYS_COUNT
@@ -128,6 +120,7 @@ async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]>
       ...patient,
       latest_assessment: latest
         ? {
+            id: latest.type === "assessment" ? (latest.data as { id: string }).id : "",
             total_score: latest.score,
             severity_level: latest.severity,
             reviewed: latest.reviewed,
@@ -147,50 +140,6 @@ async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]>
   })
 
   return patientsWithAssessments
-}
-
-function getSeverityColor(severity: string) {
-  switch (severity) {
-    case "Normal":
-      return "bg-success/10 text-success border-success/20"
-    case "Mild":
-      return "bg-info/10 text-info border-info/20"
-    case "Moderate":
-      return "bg-warning/10 text-warning border-warning/20"
-    case "Severe":
-      return "bg-destructive/10 text-destructive border-destructive/20"
-    default:
-      return "bg-muted text-muted-foreground border-border"
-  }
-}
-
-function getTrendIndicator(latest: number, previous?: number) {
-  if (!previous) return <MinusIcon className="size-4 text-muted-foreground" />
-
-  if (latest < previous) {
-    return (
-      <div className="flex items-center gap-1 text-success">
-        <TrendingDownIcon className="size-4" />
-        <span className="text-xs font-medium">-{previous - latest}</span>
-      </div>
-    )
-  } else if (latest > previous) {
-    return (
-      <div className="flex items-center gap-1 text-destructive">
-        <TrendingUpIcon className="size-4" />
-        <span className="text-xs font-medium">+{latest - previous}</span>
-      </div>
-    )
-  }
-  return <MinusIcon className="size-4 text-muted-foreground" />
-}
-
-function formatDate(date: string, locale: Locale) {
-  return new Date(date).toLocaleDateString(localeTag[locale], {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  })
 }
 
 export default async function DashboardPage() {
@@ -318,108 +267,7 @@ export default async function DashboardPage() {
                     <TableHead className="font-semibold text-foreground">{t.dashboard.status}</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {patients.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                        {t.dashboard.noPatients}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    patients.map((patient) => {
-                      const assessment = patient.latest_assessment
-                      const previousScore = patient.previous_assessment?.total_score
-
-                      return (
-                        <TableRow
-                          key={patient.id}
-                          className="group cursor-pointer border-border transition-colors hover:bg-accent/50"
-                        >
-                          <TableCell>
-                            <Link href={`/patient/${patient.id}`} className="block">
-                              <div className="space-y-0.5">
-                                <div className="font-medium transition-colors group-hover:text-primary">
-                                  {patient.name}
-                                </div>
-                                {patient.date_of_birth && (
-                                  <div className="text-xs text-muted-foreground">
-                                    {new Date(patient.date_of_birth).toLocaleDateString(localeTag[locale])}
-                                  </div>
-                                )}
-                              </div>
-                            </Link>
-                          </TableCell>
-                          <TableCell>
-                            {assessment ? (
-                              <div className="flex items-center gap-2">
-                                <span className="font-mono text-2xl font-bold">{assessment.total_score}</span>
-                                <span className="text-xs text-muted-foreground">/ 100</span>
-                              </div>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {assessment ? (
-                              <Badge variant="outline" className={getSeverityColor(assessment.severity_level)}>
-                                {getSeverityLabel(assessment.severity_level, locale)}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {assessment && getTrendIndicator(assessment.total_score, previousScore)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              {assessment?.has_screen_intolerance && (
-                                <div className="rounded-md bg-warning/10 p-1.5">
-                                  <MonitorIcon className="size-4 text-warning" />
-                                </div>
-                              )}
-                              {assessment?.has_night_driving_issues && (
-                                <div className="rounded-md bg-info/10 p-1.5">
-                                  <MoonIcon className="size-4 text-info" />
-                                </div>
-                              )}
-                              {assessment?.has_wind_sensitivity && (
-                                <div className="rounded-md bg-primary/10 p-1.5">
-                                  <WindIcon className="size-4 text-primary" />
-                                </div>
-                              )}
-                              {assessment?.has_low_humidity_issues && (
-                                <div className="rounded-md bg-chart-2/10 p-1.5">
-                                  <DropletIcon className="size-4 text-chart-2" />
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {assessment ? formatDate(assessment.assessment_date, locale) : "—"}
-                          </TableCell>
-                          <TableCell>
-                            {assessment ? (
-                              assessment.reviewed ? (
-                                <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                                  <CheckCircleIcon className="mr-1 size-3" />
-                                  {t.dashboard.reviewed}
-                                </Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                                  <AlertCircleIcon className="mr-1 size-3" />
-                                  {t.dashboard.needsReviewBadge}
-                                </Badge>
-                              )
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })
-                  )}
-                </TableBody>
+                <DashboardTableClient patients={patients} locale={locale} t={{ noPatients: t.dashboard.noPatients }} />
               </Table>
             </div>
           </CardContent>
