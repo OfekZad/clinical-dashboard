@@ -187,7 +187,10 @@ export default async function DashboardPage() {
       <div className="mx-auto max-w-[1600px] space-y-8">
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
-            <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">{t.dashboard.title}</h1>
+            <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">
+                {t.dashboard.title}
+                <sup className="ml-2 text-xs font-normal text-muted-foreground align-top">v1.0</sup>
+            </h1>
             <p className="text-muted-foreground text-pretty">{t.dashboard.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
