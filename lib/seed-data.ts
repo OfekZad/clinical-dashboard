@@ -442,7 +442,7 @@ export function getSeedPatientDetail(id: string, locale: Locale, assessmentId?: 
           assessment_id: selectedAssessment.id,
           question_number: r.question_number,
           question_text:
-            strings.survey.questions[r.question_number as keyof typeof strings.survey.questions] ??
+            strings.survey.questions[String(r.question_number) as unknown as keyof typeof strings.survey.questions] ??
             `Q${r.question_number}`,
           patient_response: r.patient_response,
           patient_quote: pick(r.quote, locale),
