@@ -15,6 +15,7 @@ import { MarkReviewedButton } from "@/components/mark-reviewed-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { ShareSurveyButton } from "@/components/share-survey-button"
+import { JoyIndicator } from "@/components/joy-indicator"
 import { getStrings, getSeverityLabel, localeTag, type Locale, type Strings, type FrequencyKey } from "@/lib/i18n"
 import { getLocale } from "@/lib/locale"
 import { getSeedPatientDetail } from "@/lib/seed-data"
@@ -207,6 +208,7 @@ export default async function PatientDetailPage({
           </Link>
           <div className="flex items-center gap-2">
             {/* <LanguageToggle /> */}
+            <JoyIndicator />
             <ThemeToggle />
           </div>
         </div>

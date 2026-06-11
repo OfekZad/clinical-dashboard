@@ -17,6 +17,7 @@ import { getLocale } from "@/lib/locale"
 import { getSeedDashboardPatients, SEED_PENDING_SURVEYS_COUNT } from "@/lib/seed-data"
 import { ShareSurveyButton } from "@/components/share-survey-button"
 import { DashboardTableClient } from "@/components/dashboard-table-client"
+import { JoyIndicator } from "@/components/joy-indicator"
 
 async function getPendingSurveysCount(): Promise<number> {
   if (!isSupabaseConfigured()) return SEED_PENDING_SURVEYS_COUNT
@@ -179,6 +180,7 @@ export default async function DashboardPage() {
             {/* <ShareSurveyButton /> */}
             {/* Language Toggle — hidden, English is default */}
             {/* <LanguageToggle /> */}
+            <JoyIndicator />
             <ThemeToggle />
           </div>
         </div>
