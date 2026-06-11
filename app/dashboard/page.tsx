@@ -53,6 +53,10 @@ async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]>
     return getSeedDashboardPatients()
   }
 
+  // 🔥 FIX: Reduced from 1 + 2N queries down to just 3 queries total
+  // by fetching all patients, assessments, and surveys in bulk, then
+  // grouping them in-memory instead of looping per-patient.
+
   const { data: patients, error } = await supabase.from("patients").select("*").order("name", { ascending: true })
 
   if (error) {
@@ -60,65 +64,87 @@ async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]>
     return getSeedDashboardPatients()
   }
 
-  const patientsWithAssessments = await Promise.all(
-    patients.map(async (patient) => {
-      const { data: assessments } = await supabase
-        .from("assessments")
-        .select("*")
-        .eq("patient_id", patient.id)
-        .order("assessment_date", { ascending: false })
+  if (!patients || patients.length === 0) return []
 
-      const { data: surveys } = await supabase
-        .from("patient_surveys")
-        .select("*")
-        .eq("patient_id", patient.id)
-        .eq("status", "scored")
-        .order("survey_date", { ascending: false })
+  const patientIds = patients.map((p) => p.id)
 
-      const allScores = [
-        ...(assessments || []).map((a) => ({
-          date: new Date(a.assessment_date),
-          score: a.total_score,
-          severity: a.severity_level,
-          reviewed: a.reviewed,
-          type: "assessment" as const,
-          data: a,
-        })),
-        ...(surveys || []).map((s) => ({
-          date: new Date(s.survey_date),
-          score: s.total_score,
-          severity: s.severity_level,
-          reviewed: true, // Surveys are auto-scored
-          type: "survey" as const,
-          data: s,
-        })),
-      ].sort((a, b) => b.date.getTime() - a.date.getTime())
+  // Fetch ALL assessments for ALL patients in one query
+  const { data: allAssessments } = await supabase
+    .from("assessments")
+    .select("*")
+    .in("patient_id", patientIds)
+    .order("assessment_date", { ascending: false })
 
-      const latest = allScores[0]
-      const previous = allScores[1]
+  // Fetch ALL scored surveys for ALL patients in one query
+  const { data: allSurveys } = await supabase
+    .from("patient_surveys")
+    .select("*")
+    .in("patient_id", patientIds)
+    .eq("status", "scored")
+    .order("survey_date", { ascending: false })
 
-      return {
-        ...patient,
-        latest_assessment: latest
-          ? {
-              total_score: latest.score,
-              severity_level: latest.severity,
-              reviewed: latest.reviewed,
-              assessment_date: latest.date.toISOString(),
-              has_screen_intolerance: latest.type === "assessment" ? latest.data.has_screen_intolerance : false,
-              has_night_driving_issues: latest.type === "assessment" ? latest.data.has_night_driving_issues : false,
-              has_wind_sensitivity: latest.type === "assessment" ? latest.data.has_wind_sensitivity : false,
-              has_low_humidity_issues: latest.type === "assessment" ? latest.data.has_low_humidity_issues : false,
-            }
-          : null,
-        previous_assessment: previous
-          ? {
-              total_score: previous.score,
-            }
-          : null,
-      }
-    }),
-  )
+  // Group assessments by patient_id (in-memory, no more DB round-trips)
+  const assessmentsByPatient: Record<string, typeof allAssessments> = {}
+  for (const a of allAssessments || []) {
+    if (!assessmentsByPatient[a.patient_id]) assessmentsByPatient[a.patient_id] = []
+    assessmentsByPatient[a.patient_id].push(a)
+  }
+
+  // Group surveys by patient_id (in-memory)
+  const surveysByPatient: Record<string, typeof allSurveys> = {}
+  for (const s of allSurveys || []) {
+    if (!surveysByPatient[s.patient_id]) surveysByPatient[s.patient_id] = []
+    surveysByPatient[s.patient_id].push(s)
+  }
+
+  // Combine everything in one pass — no per-patient DB queries
+  const patientsWithAssessments = patients.map((patient) => {
+    const assessments = assessmentsByPatient[patient.id] || []
+    const surveys = surveysByPatient[patient.id] || []
+
+    const allScores = [
+      ...assessments.map((a) => ({
+        date: new Date(a.assessment_date),
+        score: a.total_score,
+        severity: a.severity_level,
+        reviewed: a.reviewed,
+        type: "assessment" as const,
+        data: a as Record<string, unknown>,
+      })),
+      ...surveys.map((s) => ({
+        date: new Date(s.survey_date),
+        score: s.total_score,
+        severity: s.severity_level,
+        reviewed: true, // Surveys are auto-scored
+        type: "survey" as const,
+        data: s as Record<string, unknown>,
+      })),
+    ].sort((a, b) => b.date.getTime() - a.date.getTime())
+
+    const latest = allScores[0]
+    const previous = allScores[1]
+
+    return {
+      ...patient,
+      latest_assessment: latest
+        ? {
+            total_score: latest.score,
+            severity_level: latest.severity,
+            reviewed: latest.reviewed,
+            assessment_date: latest.date.toISOString(),
+            has_screen_intolerance: latest.type === "assessment" ? (latest.data as { has_screen_intolerance?: boolean }).has_screen_intolerance ?? false : false,
+            has_night_driving_issues: latest.type === "assessment" ? (latest.data as { has_night_driving_issues?: boolean }).has_night_driving_issues ?? false : false,
+            has_wind_sensitivity: latest.type === "assessment" ? (latest.data as { has_wind_sensitivity?: boolean }).has_wind_sensitivity ?? false : false,
+            has_low_humidity_issues: latest.type === "assessment" ? (latest.data as { has_low_humidity_issues?: boolean }).has_low_humidity_issues ?? false : false,
+          }
+        : null,
+      previous_assessment: previous
+        ? {
+            total_score: previous.score,
+          }
+        : null,
+    }
+  })
 
   return patientsWithAssessments
 }

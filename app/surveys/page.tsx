@@ -8,6 +8,9 @@ import { getLocale } from "@/lib/locale"
 import Link from "next/link"
 import { ArrowRightIcon, ClipboardListIcon } from "lucide-react"
 
+// 🔥 FIX: Removed N+1 pattern (was 1 + N queries). This function was
+// actually dead code — never called from the page below — but keeping it
+// clean in case it's used in the future. Now uses bulk fetch: 2 queries total.
 async function getPendingSurveys(): Promise<PatientSurveyWithResponses[]> {
   const supabase = await createServerClient()
 
@@ -21,22 +24,27 @@ async function getPendingSurveys(): Promise<PatientSurveyWithResponses[]> {
     return []
   }
 
-  const surveysWithResponses = await Promise.all(
-    surveys.map(async (survey) => {
-      const { data: responses } = await supabase
-        .from("survey_responses")
-        .select("*")
-        .eq("survey_id", survey.id)
-        .order("question_number", { ascending: true })
+  if (!surveys || surveys.length === 0) return []
 
-      return {
-        ...survey,
-        responses: responses || [],
-      }
-    }),
-  )
+  // Fetch ALL responses for ALL surveys in one query instead of one-per-survey
+  const surveyIds = surveys.map((s) => s.id)
+  const { data: allResponses } = await supabase
+    .from("survey_responses")
+    .select("*")
+    .in("survey_id", surveyIds)
+    .order("question_number", { ascending: true })
 
-  return surveysWithResponses
+  // Group responses by survey_id in-memory
+  const responsesBySurveyId: Record<string, typeof allResponses> = {}
+  for (const r of allResponses || []) {
+    if (!responsesBySurveyId[r.survey_id]) responsesBySurveyId[r.survey_id] = []
+    responsesBySurveyId[r.survey_id].push(r)
+  }
+
+  return surveys.map((survey) => ({
+    ...survey,
+    responses: responsesBySurveyId[survey.id] || [],
+  }))
 }
 
 function formatDate(date: string) {
