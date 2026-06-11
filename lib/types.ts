@@ -75,7 +75,7 @@ export type PatientSurveyWithResponses = PatientSurvey & {
   responses: SurveyResponse[]
 }
 
-export type RetellAssessmentPayload = {
+export type VoiceAgentAssessmentPayload = {
   patient: {
     name: string
     date_of_birth?: string

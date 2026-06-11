@@ -1,4 +1,4 @@
-# Retell AI Integration - Assessment Submission Endpoint
+# Voice Agent Integration - Assessment Submission Endpoint
 
 ## Endpoint
 

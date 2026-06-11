@@ -56,10 +56,11 @@ for a fresh setup.
 | `patient_engagement` | Per-patient engagement / streak tracking |
 | `calls` | Outbound voice-agent call log: one row per call with status, transcript, summary, carry-forward items, and medication adherence |
 
-## Retell voice-agent integration
+## Voice-agent integration
 
-The Retell AI agent submits assessments to `POST /api/assessment/submit`. See
-`RETELL_API_DOCUMENTATION.md` for the payload contract.
+The outbound voice agent ("Joy") submits assessments to
+`POST /api/assessment/submit`. See `VOICE_AGENT_API_DOCUMENTATION.md` for the
+payload contract. Each call is also recorded in the `calls` table.
 
 ## Security posture
 
