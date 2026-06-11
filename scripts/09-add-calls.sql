@@ -1,6 +1,6 @@
 -- One row per outbound voice call (the durable call log: status, transcript,
 -- summary, carry-forward items, and medication adherence per call)
-CREATE TABLE IF NOT EXISTS call_attempts (
+CREATE TABLE IF NOT EXISTS calls (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   patient_id UUID REFERENCES patients(id) ON DELETE CASCADE NOT NULL,
   call_number INTEGER NOT NULL,
@@ -19,6 +19,6 @@ CREATE TABLE IF NOT EXISTS call_attempts (
   UNIQUE (patient_id, call_number)
 );
 
-CREATE INDEX IF NOT EXISTS idx_call_attempts_patient_id ON call_attempts(patient_id);
-CREATE INDEX IF NOT EXISTS idx_call_attempts_assessment_id ON call_attempts(assessment_id);
-CREATE INDEX IF NOT EXISTS idx_call_attempts_status ON call_attempts(status);
+CREATE INDEX IF NOT EXISTS idx_calls_patient_id ON calls(patient_id);
+CREATE INDEX IF NOT EXISTS idx_calls_assessment_id ON calls(assessment_id);
+CREATE INDEX IF NOT EXISTS idx_calls_status ON calls(status);

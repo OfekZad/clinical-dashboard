@@ -119,7 +119,7 @@ export type MedicationUpdate = {
   notes?: string
 }
 
-export type CallAttempt = {
+export type Call = {
   id: string
   patient_id: string
   call_number: number
