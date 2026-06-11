@@ -14,6 +14,9 @@ import {
   DropletIcon,
   AlertCircleIcon,
   CheckCircleIcon,
+  EyeIcon,
+  ScanEyeIcon,
+  DropletsIcon,
 } from "lucide-react"
 import { getSeverityLabel, localeTag, type Locale } from "@/lib/i18n"
 import Link from "next/link"
@@ -185,25 +188,53 @@ function DashboardSymptomsCell({
 }) {
   return (
     <TableCell>
-      <div className="flex gap-2">
+      <div className="flex gap-1">
         {assessment?.has_screen_intolerance && (
-          <div className="rounded-md bg-warning/10 p-1.5">
-            <MonitorIcon className="size-4 text-warning" />
+          <div className="rounded-md bg-warning/10 p-1">
+            <MonitorIcon className="size-3 text-warning" />
           </div>
         )}
         {assessment?.has_night_driving_issues && (
-          <div className="rounded-md bg-info/10 p-1.5">
-            <MoonIcon className="size-4 text-info" />
+          <div className="rounded-md bg-info/10 p-1">
+            <MoonIcon className="size-3 text-info" />
           </div>
         )}
         {assessment?.has_wind_sensitivity && (
-          <div className="rounded-md bg-primary/10 p-1.5">
-            <WindIcon className="size-4 text-primary" />
+          <div className="rounded-md bg-primary/10 p-1">
+            <WindIcon className="size-3 text-primary" />
           </div>
         )}
         {assessment?.has_low_humidity_issues && (
-          <div className="rounded-md bg-chart-2/10 p-1.5">
-            <DropletIcon className="size-4 text-chart-2" />
+          <div className="rounded-md bg-chart-2/10 p-1">
+            <DropletIcon className="size-3 text-chart-2" />
+          </div>
+        )}
+      </div>
+    </TableCell>
+  )
+}
+
+function DashboardConditionsCell({
+  assessment,
+}: {
+  assessment: PatientWithLatestAssessment["latest_assessment"]
+}) {
+  return (
+    <TableCell>
+      <div className="flex gap-1.5">
+        {assessment?.has_dry_eye_syndrome && (
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-700 p-1.5 shadow-sm">
+            <EyeIcon className="size-5 text-emerald-600 dark:text-emerald-400" />
+          </div>
+        )}
+        {assessment?.has_blepharitis && (
+          <div className="rounded-lg bg-violet-50 dark:bg-violet-950/40 border border-violet-300 dark:border-violet-700 p-1.5 shadow-sm">
+            <ScanEyeIcon className="size-5 text-violet-600 dark:text-violet-400" />
+          </div>
+        )}
+        {assessment?.has_mgd && (
+          <div className="rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-700 p-1.5 shadow-sm">
+            <DropletsIcon className="size-5 text-rose-600 dark:text-rose-400" />
           </div>
         )}
       </div>
@@ -307,7 +338,7 @@ export function DashboardTableClient({ patients, locale, t }: DashboardTableClie
     <TableBody>
       {patients.length === 0 ? (
         <TableRow>
-          <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+          <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
             {t.noPatients}
           </TableCell>
         </TableRow>
@@ -326,6 +357,7 @@ export function DashboardTableClient({ patients, locale, t }: DashboardTableClie
               <DashboardSeverityCell assessment={assessment} locale={locale} />
               <DashboardTrendCell assessment={assessment} previousScore={previousScore} />
               <DashboardSymptomsCell assessment={assessment} />
+              <DashboardConditionsCell assessment={assessment} />
               <DashboardDateCell assessment={assessment} />
               <DashboardStatusCell assessment={assessment} />
             </TableRow>
