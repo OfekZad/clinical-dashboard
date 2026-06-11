@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import {
   ArrowLeftIcon, MonitorIcon, MoonIcon, WindIcon, DropletIcon,
   TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronRightIcon,
-  CalendarIcon, ClipboardListIcon, FileTextIcon, ActivityIcon, PillIcon, StethoscopeIcon,
+  ActivityIcon, PillIcon, StethoscopeIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { AddNoteForm } from "@/components/add-note-form"
@@ -17,6 +17,7 @@ import { ShareSurveyButton } from "@/components/share-survey-button"
 import { getStrings, getSeverityLabel, localeTag, type Locale, type Strings } from "@/lib/i18n"
 import { getLocale } from "@/lib/locale"
 import { getSeedPatientDetail } from "@/lib/seed-data"
+import { PatientInfoClient } from "@/components/patient-info-client"
 
 async function getPatientDetail(patientId: string, locale: Locale, assessmentId?: string) {
   if (!isSupabaseConfigured()) return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
@@ -110,15 +111,6 @@ function getSeverityColor(severity: string) {
   }
 }
 
-const scoreLabels: Record<Locale, string[]> = {
-  he: ["אף פעם", "לעיתים רחוקות", "לעיתים", "לעתים קרובות", "תמיד"],
-  en: ["Never", "Rarely", "Sometimes", "Often", "Always"],
-}
-
-function getScoreLabel(score: number, locale: Locale): string {
-  return scoreLabels[locale][score] || (locale === "he" ? "לא ידוע" : "Unknown")
-}
-
 function getTrendIndicator(currentScore: number, previousScore: number | null, t: Strings) {
   if (previousScore === null) return null
   const diff = currentScore - previousScore
@@ -149,11 +141,6 @@ export default async function PatientDetailPage({
   }
 
   const previousAssessment = assessments[1] || null
-  const trend =
-    assessment && previousAssessment
-      ? getTrendIndicator(assessment.total_score, previousAssessment.total_score, t)
-      : null
-
   const activeMedications = medications.filter((m) => m.status === "active" || m.status === "new")
   const stoppedMedications = medications.filter((m) => m.status === "stopped")
 
@@ -175,73 +162,30 @@ export default async function PatientDetailPage({
           </div>
         </div>
 
-        {/* Patient Info Header */}
-        <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="px-5 py-4">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="text-2xl font-bold">{patient.name}</CardTitle>
-                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
-                  {patient.date_of_birth && (
-                    <span>
-                      {t.patient.dateOfBirth}: {new Date(patient.date_of_birth).toLocaleDateString(localeTag[locale])}
-                    </span>
-                  )}
-                  {patient.email && <span>{patient.email}</span>}
-                  {patient.phone && <span>{patient.phone}</span>}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {/* Survey Link — hidden */}
-                {/* <ShareSurveyButton patientId={patient.id} patientName={patient.name} /> */}
-                {assessment && !assessment.reviewed && <MarkReviewedButton assessmentId={assessment.id} />}
-              </div>
-            </div>
-          </CardHeader>
-        </Card>
+        {/* Patient Info Header + Summary Cards */}
+        <PatientInfoClient
+          patient={patient}
+          assessment={assessment}
+          previousScore={previousAssessment?.total_score ?? null}
+          locale={locale}
+          t={{
+            dateOfBirth: t.patient.dateOfBirth,
+            osdiScore: t.patient.osdiScore,
+            severityLevel: t.patient.severityLevel,
+            latestAssessment: t.patient.latestAssessment,
+            previousAssessment: t.patient.previousAssessment,
+            worsening: t.patient.worsening,
+            improving: t.patient.improving,
+            stable: t.patient.stable,
+          }}
+        >
+          {/* Survey Link — hidden */}
+          {/* <ShareSurveyButton patientId={patient.id} patientName={patient.name} /> */}
+          {assessment && !assessment.reviewed && <MarkReviewedButton assessmentId={assessment.id} />}
+        </PatientInfoClient>
 
         {assessment ? (
           <>
-            {/* Compact Summary Cards */}
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
-                <div className="flex items-center gap-2">
-                  <div className="text-2xl font-bold text-foreground">{assessment.total_score}</div>
-                  {trend && (
-                    <div className={`flex items-center gap-0.5 ${trend.color}`}>
-                      <trend.icon className="size-4" />
-                      <span className="text-[10px] font-medium">{trend.label}</span>
-                    </div>
-                  )}
-                </div>
-                <div className="border-l border-border/50 pl-3">
-                  <div className="text-[11px] font-medium text-muted-foreground">{t.patient.osdiScore}</div>
-                  {previousAssessment && (
-                    <div className="text-[10px] text-muted-foreground">
-                      {t.patient.previousAssessment}: {previousAssessment.total_score}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
-                <Badge className={`text-sm font-semibold ${getSeverityColor(assessment.severity_level)}`}>
-                  {getSeverityLabel(assessment.severity_level, locale)}
-                </Badge>
-                <div className="text-[11px] font-medium text-muted-foreground">{t.patient.severityLevel}</div>
-              </div>
-              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
-                <CalendarIcon className="size-4 text-muted-foreground" />
-                <div>
-                  <div className="text-xs font-semibold text-foreground">
-                    {new Date(assessment.date).toLocaleDateString(localeTag[locale], {
-                      month: "short", day: "numeric", year: "numeric",
-                    })}
-                  </div>
-                  <div className="text-[11px] font-medium text-muted-foreground">{t.patient.latestAssessment}</div>
-                </div>
-              </div>
-            </div>
-
             {/* Two-Column Layout */}
             <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
               {/* Left Column: Notes */}
