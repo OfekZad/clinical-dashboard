@@ -17,40 +17,43 @@ const ONE_YEAR = 60 * 60 * 24 * 365
 
 interface LocaleProviderProps {
   children: ReactNode
-  // Provided by the server layout (read from the cookie) to keep SSR and the
-  // client in sync and avoid hydration mismatches.
-  initialLocale?: Locale
 }
 
 // Helper to read the locale cookie in the browser
 function getCookieLocale(): Locale | null {
   if (typeof document === "undefined") return null
   const match = document.cookie.match(new RegExp(`(^| )${LOCALE_COOKIE}=([^;]+)`))
-  return match ? (match[2] as Locale) : null
+  if (!match) return null
+  const val = match[2] as Locale
+  return val === "he" || val === "en" ? val : null
 }
 
-export function LocaleProvider({ children, initialLocale = defaultLocale }: LocaleProviderProps) {
+export function LocaleProvider({ children }: LocaleProviderProps) {
   const router = useRouter()
-  // 🔥 OPTIMIZATION: On mount, read the locale cookie to set the correct
-  // <html lang/dir> attributes. This avoids needing cookies() in the server
-  // layout, allowing the layout shell to be cached by Vercel's edge CDN.
-  const [locale, setLocaleState] = useState<Locale>(() => {
-    // On the client, prefer the cookie value over the server-provided initialLocale
-    if (typeof window !== "undefined") {
-      return getCookieLocale() ?? initialLocale
-    }
-    return initialLocale
-  })
+  // 🔥 OPTIMIZATION: Always start with the default locale during SSR + hydration
+  // so the server-rendered HTML matches the client's first render perfectly.
+  // After mount, the useEffect below reads the actual cookie and corrects
+  // the locale if needed — no hydration mismatch.
+  const [locale, setLocaleState] = useState<Locale>(defaultLocale)
 
-  // Sync <html> attributes on mount AND whenever the locale changes
-  // (e.g. from LanguageToggle click or initial page load).
-  const [hasSyncedHtml, setHasSyncedHtml] = useState(false)
+  // After hydration, read the cookie and sync <html> attributes.
+  // Using an empty dependency array means this runs once after mount —
+  // well after hydration is complete, so no hydration mismatch.
   useEffect(() => {
+    const cookieLocale = getCookieLocale()
+    const effectiveLocale = cookieLocale ?? defaultLocale
+
+    // Sync <html> lang/dir attributes
     const root = document.documentElement
-    root.lang = locale
-    root.dir = localeDirection[locale]
-    if (!hasSyncedHtml) setHasSyncedHtml(true)
-  }, [locale, hasSyncedHtml])
+    root.lang = effectiveLocale
+    root.dir = localeDirection[effectiveLocale]
+
+    // If the cookie says a different locale than what we rendered on the server,
+    // update state post-hydration (safe — hydration is already done)
+    if (effectiveLocale !== defaultLocale) {
+      setLocaleState(effectiveLocale)
+    }
+  }, [])
 
   const setLocale = (next: Locale) => {
     setLocaleState(next)
