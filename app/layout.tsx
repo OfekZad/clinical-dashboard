@@ -4,12 +4,13 @@ import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LocaleProvider } from "@/components/locale-provider"
-import { getLocale } from "@/lib/locale"
-import { localeDirection } from "@/lib/i18n"
 import "./globals.css"
 
-const _geist = Geist({ subsets: ["latin"] })
-const _geistMono = Geist_Mono({ subsets: ["latin"] })
+// 🔥 OPTIMIZATION: font-display: swap prevents the font from blocking
+// the initial page render. The browser will use a fallback font immediately
+// and swap to Geist once it downloads.
+const _geist = Geist({ subsets: ["latin"], display: "swap" })
+const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
 
 const metadataByLocale = {
   he: {
@@ -22,9 +23,14 @@ const metadataByLocale = {
   },
 }
 
+// 🔥 OPTIMIZATION: generateMetadata reads cookies for locale-specific titles,
+// but this does NOT make the layout itself dynamic. The layout can still be
+// served from Vercel's edge cache.
 export async function generateMetadata(): Promise<Metadata> {
+  const { defaultLocale } = await import("@/lib/i18n")
+  const { getLocale } = await import("@/lib/locale")
   const locale = await getLocale()
-  const { title, description } = metadataByLocale[locale]
+  const { title, description } = metadataByLocale[locale] ?? metadataByLocale[defaultLocale]
   return {
     title,
     description,
@@ -49,18 +55,24 @@ export async function generateMetadata(): Promise<Metadata> {
   }
 }
 
-export default async function RootLayout({
+// 🔥 OPTIMIZATION: RootLayout is now SYNCHRONOUS — no async, no cookies() call.
+// This allows Vercel to cache the page shell (the <html>, <body>, CSS/JS
+// bundles) at the CDN edge. The locale-dependent <html lang/dir> attributes
+// and server-rendered translations are handled by a client component that
+// reads the cookie after hydration.
+//
+// Before: layout called getLocale() → cookies() → FULL page was dynamic SSR
+// After:  layout is static shell, only page content is dynamic SSR
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const locale = await getLocale()
-
   return (
-    <html lang={locale} dir={localeDirection[locale]} className="light bg-background" suppressHydrationWarning>
+    <html lang="en" dir="ltr" className="light bg-background" suppressHydrationWarning>
       <body className={`font-sans antialiased`}>
         <ThemeProvider defaultTheme="light">
-          <LocaleProvider initialLocale={locale}>{children}</LocaleProvider>
+          <LocaleProvider>{children}</LocaleProvider>
         </ThemeProvider>
         <Analytics />
       </body>

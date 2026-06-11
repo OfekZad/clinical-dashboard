@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, type ReactNode } from "react"
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { defaultLocale, getStrings, localeDirection, type Locale, type Strings } from "@/lib/i18n"
 
@@ -22,9 +22,35 @@ interface LocaleProviderProps {
   initialLocale?: Locale
 }
 
+// Helper to read the locale cookie in the browser
+function getCookieLocale(): Locale | null {
+  if (typeof document === "undefined") return null
+  const match = document.cookie.match(new RegExp(`(^| )${LOCALE_COOKIE}=([^;]+)`))
+  return match ? (match[2] as Locale) : null
+}
+
 export function LocaleProvider({ children, initialLocale = defaultLocale }: LocaleProviderProps) {
   const router = useRouter()
-  const [locale, setLocaleState] = useState<Locale>(initialLocale)
+  // 🔥 OPTIMIZATION: On mount, read the locale cookie to set the correct
+  // <html lang/dir> attributes. This avoids needing cookies() in the server
+  // layout, allowing the layout shell to be cached by Vercel's edge CDN.
+  const [locale, setLocaleState] = useState<Locale>(() => {
+    // On the client, prefer the cookie value over the server-provided initialLocale
+    if (typeof window !== "undefined") {
+      return getCookieLocale() ?? initialLocale
+    }
+    return initialLocale
+  })
+
+  // Sync <html> attributes on mount AND whenever the locale changes
+  // (e.g. from LanguageToggle click or initial page load).
+  const [hasSyncedHtml, setHasSyncedHtml] = useState(false)
+  useEffect(() => {
+    const root = document.documentElement
+    root.lang = locale
+    root.dir = localeDirection[locale]
+    if (!hasSyncedHtml) setHasSyncedHtml(true)
+  }, [locale, hasSyncedHtml])
 
   const setLocale = (next: Locale) => {
     setLocaleState(next)
