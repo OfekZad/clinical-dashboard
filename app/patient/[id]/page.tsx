@@ -3,16 +3,10 @@ import type { AssessmentResponse, ClinicianNote, SurveyResponse } from "@/lib/ty
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
-  ArrowLeftIcon,
-  MonitorIcon,
-  MoonIcon,
-  WindIcon,
-  DropletIcon,
-  TrendingUpIcon,
-  TrendingDownIcon,
-  MinusIcon,
+  ArrowLeftIcon, MonitorIcon, MoonIcon, WindIcon, DropletIcon,
+  TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronRightIcon,
+  CalendarIcon, ClipboardListIcon, FileTextIcon, ActivityIcon, PillIcon, StethoscopeIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { AddNoteForm } from "@/components/add-note-form"
@@ -28,10 +22,6 @@ async function getPatientDetail(patientId: string, locale: Locale, assessmentId?
   if (!isSupabaseConfigured()) return seedPatientDetailOrEmpty(patientId, locale, assessmentId)
   try {
     const result = await fetchPatientDetail(patientId, assessmentId)
-    // Supabase returns errors (not exceptions) for missing rows / invalid ids / RLS,
-    // so a thrown error isn't guaranteed. If the DB yielded no patient, fall back to
-    // seed data when the id is one we have (e.g. the dashboard fell back to seed and
-    // linked to a seed id like "seed-emily").
     if (!result.patient) {
       const seed = getSeedPatientDetail(patientId, locale, assessmentId)
       if (seed) return seed
@@ -47,55 +37,28 @@ function seedPatientDetailOrEmpty(patientId: string, locale: Locale, assessmentI
   const seed = getSeedPatientDetail(patientId, locale, assessmentId)
   if (seed) return seed
   return {
-    patient: null,
-    assessment: null,
-    assessments: [],
-    responses: [] as AssessmentResponse[],
-    surveyResponses: [] as SurveyResponse[],
-    notes: [] as ClinicianNote[],
-    medications: [],
+    patient: null, assessment: null, assessments: [],
+    responses: [] as AssessmentResponse[], surveyResponses: [] as SurveyResponse[],
+    notes: [] as ClinicianNote[], medications: [],
   }
 }
 
 async function fetchPatientDetail(patientId: string, assessmentId?: string) {
   const supabase = await createServerClient()
-
   const { data: patient } = await supabase.from("patients").select("*").eq("id", patientId).single()
-
-  // Fetch all assessments for this patient
   const { data: assessments } = await supabase
-    .from("assessments")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("assessment_date", { ascending: false })
-
+    .from("assessments").select("*").eq("patient_id", patientId).order("assessment_date", { ascending: false })
   const { data: surveys } = await supabase
-    .from("patient_surveys")
-    .select("*")
-    .eq("patient_id", patientId)
-    .eq("status", "scored")
-    .order("survey_date", { ascending: false })
+    .from("patient_surveys").select("*").eq("patient_id", patientId).eq("status", "scored").order("survey_date", { ascending: false })
 
   const allAssessments = [
-    ...(assessments || []).map((a) => ({
-      ...a,
-      type: "ai" as const,
-      date: a.assessment_date,
-    })),
+    ...(assessments || []).map((a) => ({ ...a, type: "ai" as const, date: a.assessment_date })),
     ...(surveys || []).map((s) => ({
-      id: s.id,
-      patient_id: s.patient_id!,
-      assessment_date: s.survey_date,
-      total_score: s.total_score!,
-      severity_level: s.severity_level!,
-      has_screen_intolerance: false,
-      has_night_driving_issues: false,
-      has_wind_sensitivity: false,
-      has_low_humidity_issues: false,
-      reviewed: true,
-      created_at: s.created_at,
-      type: "survey" as const,
-      date: s.survey_date,
+      id: s.id, patient_id: s.patient_id!, assessment_date: s.survey_date,
+      total_score: s.total_score!, severity_level: s.severity_level!,
+      has_screen_intolerance: false, has_night_driving_issues: false,
+      has_wind_sensitivity: false, has_low_humidity_issues: false,
+      reviewed: true, created_at: s.created_at, type: "survey" as const, date: s.survey_date,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
@@ -110,47 +73,27 @@ async function fetchPatientDetail(patientId: string, assessmentId?: string) {
   if (selectedAssessment) {
     if (selectedAssessment.type === "ai") {
       const { data: responsesData } = await supabase
-        .from("assessment_responses")
-        .select("*")
-        .eq("assessment_id", selectedAssessment.id)
-        .order("question_number", { ascending: true })
-
+        .from("assessment_responses").select("*").eq("assessment_id", selectedAssessment.id).order("question_number", { ascending: true })
       const { data: notesData } = await supabase
-        .from("clinician_notes")
-        .select("*")
-        .eq("assessment_id", selectedAssessment.id)
-        .order("created_at", { ascending: false })
-
+        .from("clinician_notes").select("*").eq("assessment_id", selectedAssessment.id).order("created_at", { ascending: false })
       responses = responsesData || []
       notes = notesData || []
     } else {
-      // Fetch survey responses
       const { data: surveyResponsesData } = await supabase
-        .from("survey_responses")
-        .select("*")
-        .eq("survey_id", selectedAssessment.id)
-        .order("question_number", { ascending: true })
-
+        .from("survey_responses").select("*").eq("survey_id", selectedAssessment.id).order("question_number", { ascending: true })
       surveyResponses = surveyResponsesData || []
     }
   }
 
   const { data: medications } = await supabase
-    .from("patient_medications")
-    .select("*")
-    .eq("patient_id", patientId)
-    .order("created_at", { ascending: false })
+    .from("patient_medications").select("*").eq("patient_id", patientId).order("created_at", { ascending: false })
 
   return {
-    patient,
-    assessment: selectedAssessment,
-    assessments: allAssessments,
-    responses,
-    surveyResponses,
-    notes,
-    medications: medications || [],
+    patient, assessment: selectedAssessment, assessments: allAssessments,
+    responses, surveyResponses, notes, medications: medications || [],
   }
 }
+
 
 function getSeverityColor(severity: string) {
   switch (severity) {
@@ -185,6 +128,7 @@ function getTrendIndicator(currentScore: number, previousScore: number | null, t
   return { icon: MinusIcon, label: t.patient.stable, color: "text-gray-600 dark:text-gray-400" }
 }
 
+
 export default async function PatientDetailPage({
   params,
   searchParams,
@@ -197,9 +141,7 @@ export default async function PatientDetailPage({
   const locale = await getLocale()
   const t = getStrings(locale)
   const { patient, assessment, assessments, responses, surveyResponses, notes, medications } = await getPatientDetail(
-    id,
-    locale,
-    assessmentId,
+    id, locale, assessmentId,
   )
 
   if (!patient) {
@@ -216,11 +158,12 @@ export default async function PatientDetailPage({
   const stoppedMedications = medications.filter((m) => m.status === "stopped")
 
   return (
-    <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="mb-8 flex items-center justify-between">
+    <div className="min-h-screen bg-background p-3 md:p-6">
+      <div className="mx-auto max-w-7xl space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <Link href="/dashboard">
-            <Button variant="ghost" className="gap-2">
+            <Button variant="ghost" className="gap-1.5 h-8 text-sm">
               <ArrowLeftIcon className="size-4" />
               {t.patient.backToDashboard}
             </Button>
@@ -232,12 +175,13 @@ export default async function PatientDetailPage({
           </div>
         </div>
 
+        {/* Patient Info Header */}
         <Card className="border-border bg-card shadow-sm">
-          <CardHeader className="border-b border-border pb-6">
+          <CardHeader className="px-5 py-4">
             <div className="flex items-start justify-between">
               <div>
-                <CardTitle className="text-3xl font-bold">{patient.name}</CardTitle>
-                <div className="mt-2 flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <CardTitle className="text-2xl font-bold">{patient.name}</CardTitle>
+                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                   {patient.date_of_birth && (
                     <span>
                       {t.patient.dateOfBirth}: {new Date(patient.date_of_birth).toLocaleDateString(localeTag[locale])}
@@ -245,9 +189,6 @@ export default async function PatientDetailPage({
                   )}
                   {patient.email && <span>{patient.email}</span>}
                   {patient.phone && <span>{patient.phone}</span>}
-                  <span className="font-medium text-foreground">
-                    {assessments.length} {t.patient.assessments}
-                  </span>
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -257,470 +198,271 @@ export default async function PatientDetailPage({
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-8 pt-6">
-            {assessment ? (
-              <>
-                <div className="grid gap-6 sm:grid-cols-3">
-                  <Card className="border-border bg-accent/30 shadow-sm transition-all hover:shadow-md">
-                    <CardContent className="pt-6">
-                      <div className="flex items-center gap-3">
-                        <div className="text-5xl font-bold text-foreground">{assessment.total_score}</div>
-                        {trend && (
-                          <div className={`flex items-center gap-1 ${trend.color}`}>
-                            <trend.icon className="size-5" />
-                            <span className="text-xs font-medium">{trend.label}</span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.osdiScore}</div>
-                      {previousAssessment && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          {t.patient.previousAssessment}: {previousAssessment.total_score}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
-                  <Card className="border-border bg-accent/30 shadow-sm transition-all hover:shadow-md">
-                    <CardContent className="pt-6">
-                      <Badge className={`text-base font-semibold ${getSeverityColor(assessment.severity_level)}`}>
-                        {getSeverityLabel(assessment.severity_level, locale)}
-                      </Badge>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.severityLevel}</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-border bg-accent/30 shadow-sm transition-all hover:shadow-md">
-                    <CardContent className="pt-6">
-                      <div className="text-lg font-semibold text-foreground">
-                        {new Date(assessment.date).toLocaleDateString(localeTag[locale], {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </div>
-                      <div className="mt-2 text-sm font-medium text-muted-foreground">{t.patient.latestAssessment}</div>
-                    </CardContent>
-                  </Card>
+        </Card>
+
+        {assessment ? (
+          <>
+            {/* Compact Summary Cards */}
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <div className="text-2xl font-bold text-foreground">{assessment.total_score}</div>
+                  {trend && (
+                    <div className={`flex items-center gap-0.5 ${trend.color}`}>
+                      <trend.icon className="size-4" />
+                      <span className="text-[10px] font-medium">{trend.label}</span>
+                    </div>
+                  )}
                 </div>
+                <div className="border-l border-border/50 pl-3">
+                  <div className="text-[11px] font-medium text-muted-foreground">{t.patient.osdiScore}</div>
+                  {previousAssessment && (
+                    <div className="text-[10px] text-muted-foreground">
+                      {t.patient.previousAssessment}: {previousAssessment.total_score}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
+                <Badge className={`text-sm font-semibold ${getSeverityColor(assessment.severity_level)}`}>
+                  {getSeverityLabel(assessment.severity_level, locale)}
+                </Badge>
+                <div className="text-[11px] font-medium text-muted-foreground">{t.patient.severityLevel}</div>
+              </div>
+              <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
+                <CalendarIcon className="size-4 text-muted-foreground" />
+                <div>
+                  <div className="text-xs font-semibold text-foreground">
+                    {new Date(assessment.date).toLocaleDateString(localeTag[locale], {
+                      month: "short", day: "numeric", year: "numeric",
+                    })}
+                  </div>
+                  <div className="text-[11px] font-medium text-muted-foreground">{t.patient.latestAssessment}</div>
+                </div>
+              </div>
+            </div>
 
-                <Tabs defaultValue="current" className="space-y-6">
-                  <TabsList className="grid w-full grid-cols-4 gap-2">
-                    <TabsTrigger value="current">{t.patient.currentAssessment}</TabsTrigger>
-                    <TabsTrigger value="history">{t.patient.assessmentHistory}</TabsTrigger>
-                    <TabsTrigger value="medications">{t.patient.medications}</TabsTrigger>
-                    <TabsTrigger value="notes">{t.patient.clinicianNotes}</TabsTrigger>
-                  </TabsList>
-
-                  {/* Current Assessment Tab Content */}
-                  <TabsContent value="current" className="space-y-6 mt-6">
-                    <Card className="border-border bg-card shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">{t.patient.symptomFlagsTitle}</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid gap-4 sm:grid-cols-2">
-                          <div
-                            className={`flex items-center gap-3 rounded-lg border p-4 transition-all ${
-                              assessment.has_screen_intolerance
-                                ? "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30"
-                                : "border-border bg-accent/20"
-                            }`}
-                          >
-                            <MonitorIcon
-                              className={`size-5 ${
-                                assessment.has_screen_intolerance
-                                  ? "text-amber-600 dark:text-amber-400"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                            <span
-                              className={`font-medium ${
-                                assessment.has_screen_intolerance ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {t.patient.screenIntolerance}
-                            </span>
-                          </div>
-                          <div
-                            className={`flex items-center gap-3 rounded-lg border p-4 transition-all ${
-                              assessment.has_night_driving_issues
-                                ? "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
-                                : "border-border bg-accent/20"
-                            }`}
-                          >
-                            <MoonIcon
-                              className={`size-5 ${
-                                assessment.has_night_driving_issues
-                                  ? "text-blue-600 dark:text-blue-400"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                            <span
-                              className={`font-medium ${
-                                assessment.has_night_driving_issues ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {t.patient.nightDrivingIssues}
-                            </span>
-                          </div>
-                          <div
-                            className={`flex items-center gap-3 rounded-lg border p-4 transition-all ${
-                              assessment.has_wind_sensitivity
-                                ? "border-cyan-300 bg-cyan-50 dark:border-cyan-800 dark:bg-cyan-950/30"
-                                : "border-border bg-accent/20"
-                            }`}
-                          >
-                            <WindIcon
-                              className={`size-5 ${
-                                assessment.has_wind_sensitivity
-                                  ? "text-cyan-600 dark:text-cyan-400"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                            <span
-                              className={`font-medium ${
-                                assessment.has_wind_sensitivity ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {t.patient.windSensitivity}
-                            </span>
-                          </div>
-                          <div
-                            className={`flex items-center gap-3 rounded-lg border p-4 transition-all ${
-                              assessment.has_low_humidity_issues
-                                ? "border-indigo-300 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-950/30"
-                                : "border-border bg-accent/20"
-                            }`}
-                          >
-                            <DropletIcon
-                              className={`size-5 ${
-                                assessment.has_low_humidity_issues
-                                  ? "text-indigo-600 dark:text-indigo-400"
-                                  : "text-muted-foreground"
-                              }`}
-                            />
-                            <span
-                              className={`font-medium ${
-                                assessment.has_low_humidity_issues ? "text-foreground" : "text-muted-foreground"
-                              }`}
-                            >
-                              {t.patient.humidityIssues}
-                            </span>
+            {/* Two-Column Layout */}
+            <div className="grid gap-4 lg:grid-cols-[1fr_1.5fr]">
+              {/* Left Column: Notes */}
+              <div className="space-y-4">
+                {/* Clinician Notes */}
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <StethoscopeIcon className="size-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-semibold">{t.patient.clinicianNotes}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                    {notes.length > 0 ? (
+                      notes.map((note) => (
+                        <div key={note.id} className="rounded-lg border border-border bg-accent/30 p-3 transition-all hover:bg-accent/50">
+                          <div className="mb-1 text-xs text-foreground">{note.note_text}</div>
+                          <div className="text-[10px] text-muted-foreground">
+                            {note.created_by} &bull; {new Date(note.created_at).toLocaleString()}
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-
-                    {assessment?.type === "ai" && responses.length > 0 && (
-                      <Card className="border-border bg-card shadow-sm">
-                        <CardContent className="space-y-3">
-                          {responses.map((response) => (
-                            <div
-                              key={response.id}
-                              className="rounded-lg border border-border bg-accent/30 p-4 transition-all hover:bg-accent/50"
-                            >
-                              <div className="mb-3 flex items-start justify-between gap-4">
-                                <div className="font-medium">
-                                  <span className="text-muted-foreground">Q{response.question_number}.</span>{" "}
-                                  {response.question_text}
-                                </div>
-                                <Badge variant="outline" className="shrink-0 font-semibold">
-                                  {response.patient_response}/4 - {getScoreLabel(response.patient_response, locale)}
-                                </Badge>
-                              </div>
-                              {response.patient_quote && (
-                                <div className="mb-2 italic text-muted-foreground">"{response.patient_quote}"</div>
-                              )}
-                              {response.reasoning && (
-                                <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium text-foreground">{t.patient.clinicalNote}:</span>{" "}
-                                  {response.reasoning}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{t.patient.noNotesYet}</p>
                     )}
+                    <AddNoteForm assessmentId={assessment.id} />
+                  </CardContent>
+                </Card>
+              </div>
 
-                    {assessment?.type === "survey" && surveyResponses.length > 0 && (
-                      <Card className="border-border bg-card shadow-sm">
-                        <CardHeader>
-                          <CardTitle className="text-xl font-semibold text-foreground">
-                            {t.patient.patientResponsesTitle}
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          {surveyResponses.map((response) => (
-                            <div key={response.id} className="border-b border-border pb-4 last:border-0">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="text-sm font-medium text-foreground">
-                                  {t.patient.question} {response.question_number}
-                                </div>
-                                <Badge variant="outline" className="text-xs">
-                                  {t.patient.score}: {response.assigned_score}/4
-                                </Badge>
-                              </div>
-                              <div className="space-y-2">
-                                <div className="text-sm text-muted-foreground">
-                                  <span className="font-medium">{t.patient.frequency}:</span>{" "}
-                                  {t.survey.frequency[response.frequency as keyof typeof t.survey.frequency]}
-                                </div>
-                                {response.free_text && (
-                                  <div className="text-sm bg-muted p-3 rounded-md">
-                                    <span className="font-medium text-foreground">{t.patient.patientDescription}:</span>
-                                    <p className="mt-1 text-muted-foreground">{response.free_text}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </CardContent>
-                      </Card>
-                    )}
+              {/* Right Column: Symptoms, History, Medications */}
+              <div className="space-y-4">
+                {/* Symptom Flags - inline chips */}
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <ActivityIcon className="size-3.5 text-muted-foreground" />
+                      <CardTitle className="text-xs font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-3 pt-0">
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort, color: "amber" },
+                        { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort, color: "blue" },
+                        { flag: assessment.has_wind_sensitivity, icon: WindIcon, label: t.patient.flagWindShort, color: "cyan" },
+                        { flag: assessment.has_low_humidity_issues, icon: DropletIcon, label: t.patient.flagHumidityShort, color: "indigo" },
+                      ].map(({ flag, icon: Icon, label, color }) => (
+                        <div
+                          key={label}
+                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${
+                            flag
+                              ? `border-${color}-300 bg-${color}-50 dark:border-${color}-800 dark:bg-${color}-950/30`
+                              : "border-border bg-accent/20 opacity-50"
+                          }`}
+                        >
+                          <Icon className={`size-3 shrink-0 ${flag ? `text-${color}-600 dark:text-${color}-400` : "text-muted-foreground"}`} />
+                          <span className={`text-[10px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                            {flag ? label : `No ${label}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
 
-                    <Card className="border-border bg-card shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">{t.patient.clinicianNotes}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {notes.length > 0 ? (
-                          notes.map((note) => (
-                            <div
-                              key={note.id}
-                              className="rounded-lg border border-border bg-accent/30 p-4 transition-all hover:bg-accent/50"
-                            >
-                              <div className="mb-2 text-foreground">{note.note_text}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {note.created_by} • {new Date(note.created_at).toLocaleString()}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">{t.patient.noNotesYet}</p>
-                        )}
-                        <AddNoteForm assessmentId={assessment.id} />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-
-                  {/* Assessment History Tab Content */}
-                  <TabsContent value="history" className="space-y-4 mt-6">
-                    {assessments.map((hist, index) => {
+                {/* Assessment History */}
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <TrendingDownIcon className="size-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-semibold">{t.patient.assessmentHistory}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                    {assessments.slice(0, 8).map((hist, index) => {
                       const prevHist = assessments[index + 1] || null
                       const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score, t) : null
                       const isSelected = assessment?.id === hist.id
 
                       return (
-                        <Card
+                        <div
                           key={hist.id}
-                          className={`border-border bg-card shadow-sm transition-all hover:shadow-md ${isSelected ? "ring-2 ring-primary" : ""}`}
+                          className={`rounded-lg border px-3 py-2 transition-all ${
+                            isSelected
+                              ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20"
+                              : "border-border bg-accent/20 hover:bg-accent/40"
+                          }`}
                         >
-                          <CardContent className="pt-6">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-4">
-                                  <div className="text-3xl font-bold text-foreground">{hist.total_score}</div>
-                                  <Badge className={`text-sm ${getSeverityColor(hist.severity_level)}`}>
-                                    {getSeverityLabel(hist.severity_level, locale)}
-                                  </Badge>
-                                  <Badge variant="secondary" className="text-xs">
-                                    {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
-                                  </Badge>
-                                  {histTrend && (
-                                    <div className={`flex items-center gap-1 ${histTrend.color}`}>
-                                      <histTrend.icon className="size-4" />
-                                      <span className="text-xs font-medium">{histTrend.label}</span>
-                                    </div>
-                                  )}
-                                  {isSelected && (
-                                    <Badge variant="outline" className="text-xs">
-                                      {t.patient.viewing}
-                                    </Badge>
-                                  )}
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <div className="text-base font-bold text-foreground shrink-0">{hist.total_score}</div>
+                              <Badge className={`text-[10px] px-1.5 py-0 ${getSeverityColor(hist.severity_level)}`}>
+                                {getSeverityLabel(hist.severity_level, locale)}
+                              </Badge>
+                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
+                              </Badge>
+                              {histTrend && (
+                                <div className={`flex items-center gap-0.5 ${histTrend.color}`}>
+                                  <histTrend.icon className="size-3" />
                                 </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {new Date(hist.date).toLocaleDateString(localeTag[locale], {
-                                    month: "long",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  })}
-                                </div>
-                                {/* Existing symptom flags */}
-                                <div className="flex gap-2 mt-3">
-                                  {hist.has_screen_intolerance && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <MonitorIcon className="size-3 mr-1" />
-                                      {t.patient.flagScreenShort}
-                                    </Badge>
-                                  )}
-                                  {hist.has_night_driving_issues && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <MoonIcon className="size-3 mr-1" />
-                                      {t.patient.flagNightShort}
-                                    </Badge>
-                                  )}
-                                  {hist.has_wind_sensitivity && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <WindIcon className="size-3 mr-1" />
-                                      {t.patient.flagWindShort}
-                                    </Badge>
-                                  )}
-                                  {hist.has_low_humidity_issues && (
-                                    <Badge variant="outline" className="text-xs">
-                                      <DropletIcon className="size-3 mr-1" />
-                                      {t.patient.flagHumidityShort}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                className="hover:bg-accent transition-colors bg-transparent"
-                              >
-                                <Link href={`/patient/${id}?assessment=${hist.id}`}>{t.patient.viewReport}</Link>
-                              </Button>
+                              )}
                             </div>
-                          </CardContent>
-                        </Card>
+                            <Button variant="ghost" size="icon" asChild className="size-6 shrink-0">
+                              <Link href={`/patient/${id}?assessment=${hist.id}`}>
+                                <ChevronRightIcon className="size-3" />
+                              </Link>
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between mt-0.5">
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(hist.date).toLocaleDateString(localeTag[locale], {
+                                month: "short", day: "numeric", year: "numeric",
+                              })}
+                            </span>
+                            <div className="flex gap-1">
+                              {hist.has_screen_intolerance && <MonitorIcon className="size-2.5 text-amber-500" />}
+                              {hist.has_night_driving_issues && <MoonIcon className="size-2.5 text-blue-500" />}
+                              {hist.has_wind_sensitivity && <WindIcon className="size-2.5 text-cyan-500" />}
+                              {hist.has_low_humidity_issues && <DropletIcon className="size-2.5 text-indigo-500" />}
+                            </div>
+                          </div>
+                        </div>
                       )
                     })}
-                  </TabsContent>
-
-                  {/* Medications Tab Content */}
-                  <TabsContent value="medications" className="space-y-6">
-                    {/* Active Medications */}
-                    <Card>
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          {t.patient.activeMedications}
-                          <Badge variant="secondary" className="text-xs">
-                            {activeMedications.length}
-                          </Badge>
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        {activeMedications.length === 0 ? (
-                          <p className="text-center text-muted-foreground">{t.patient.noMedications}</p>
-                        ) : (
-                          <div className="space-y-4">
-                            {activeMedications.map((med) => (
-                              <div key={med.id} className="rounded-lg border border-border bg-card p-4 space-y-2">
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1 space-y-1">
-                                    <h4 className="font-semibold text-lg">{med.medication_name}</h4>
-                                    <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                                      {med.dosage && (
-                                        <div>
-                                          <span className="font-medium">{t.patient.dosage}:</span> {med.dosage}
-                                        </div>
-                                      )}
-                                      {med.frequency && (
-                                        <div>
-                                          <span className="font-medium">{t.patient.frequency}:</span> {med.frequency}
-                                        </div>
-                                      )}
-                                      {med.start_date && (
-                                        <div>
-                                          <span className="font-medium">{t.patient.startDate}:</span>{" "}
-                                          {new Date(med.start_date).toLocaleDateString(localeTag[locale])}
-                                        </div>
-                                      )}
-                                    </div>
-                                    {med.notes && <p className="text-sm text-muted-foreground mt-2">{med.notes}</p>}
-                                  </div>
-                                  {med.status === "new" && (
-                                    <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400">
-                                      {t.patient.medicationStatus.new}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
-                    {/* Stopped Medications */}
-                    {stoppedMedications.length > 0 && (
-                      <Card>
-                        <CardHeader>
-                          <CardTitle className="flex items-center gap-2">
-                            {t.patient.stoppedMedications}
-                            <Badge variant="secondary" className="text-xs">
-                              {stoppedMedications.length}
-                            </Badge>
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            {stoppedMedications.map((med) => (
-                              <div key={med.id} className="rounded-lg border border-border bg-muted/30 p-4 space-y-2">
-                                <div className="flex items-start justify-between gap-4">
-                                  <div className="flex-1 space-y-1">
-                                    <h4 className="font-semibold text-lg opacity-60">{med.medication_name}</h4>
-                                    <div className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2">
-                                      {med.dosage && (
-                                        <div>
-                                          <span className="font-medium">{t.patient.dosage}:</span> {med.dosage}
-                                        </div>
-                                      )}
-                                      {med.stop_date && (
-                                        <div>
-                                          <span className="font-medium">{t.patient.stopDate}:</span>{" "}
-                                          {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}
-                                        </div>
-                                      )}
-                                    </div>
-                                    {med.notes && <p className="text-sm text-muted-foreground mt-2">{med.notes}</p>}
-                                  </div>
-                                  <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground">
-                                    {t.patient.medicationStatus.stopped}
-                                  </Badge>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </CardContent>
-                      </Card>
+                    {assessments.length > 8 && (
+                      <p className="text-[10px] text-center text-muted-foreground">
+                        +{assessments.length - 8} more
+                      </p>
                     )}
-                  </TabsContent>
+                  </CardContent>
+                </Card>
 
-                  {/* Clinician Notes Tab Content */}
-                  <TabsContent value="notes" className="space-y-6 mt-6">
-                    <Card className="border-border bg-card shadow-sm">
-                      <CardHeader className="pb-4">
-                        <CardTitle className="text-xl">{t.patient.clinicianNotes}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {notes.length > 0 ? (
-                          notes.map((note) => (
-                            <div
-                              key={note.id}
-                              className="rounded-lg border border-border bg-accent/30 p-4 transition-all hover:bg-accent/50"
-                            >
-                              <div className="mb-2 text-foreground">{note.note_text}</div>
-                              <div className="text-xs text-muted-foreground">
-                                {note.created_by} • {new Date(note.created_at).toLocaleString()}
+                {/* Active Medications */}
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <PillIcon className="size-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-semibold">{t.patient.activeMedications}</CardTitle>
+                      {activeMedications.length > 0 && (
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {activeMedications.length}
+                        </Badge>
+                      )}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                    {activeMedications.length === 0 ? (
+                      <p className="text-xs text-center text-muted-foreground">{t.patient.noMedications}</p>
+                    ) : (
+                      activeMedications.map((med) => (
+                        <div key={med.id} className="rounded-lg border border-border bg-accent/20 p-3 space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-semibold">{med.medication_name}</h4>
+                              <div className="text-[10px] text-muted-foreground">
+                                {med.dosage && <span>{med.dosage}{med.frequency ? `, ${med.frequency}` : ""}</span>}
                               </div>
+                              {med.start_date && (
+                                <div className="text-[10px] text-muted-foreground">
+                                  {t.patient.startDate}: {new Date(med.start_date).toLocaleDateString(localeTag[locale])}
+                                </div>
+                              )}
+                              {med.notes && <p className="text-[10px] text-muted-foreground mt-1">{med.notes}</p>}
                             </div>
-                          ))
-                        ) : (
-                          <p className="text-sm text-muted-foreground">{t.patient.noNotesYet}</p>
-                        )}
-                        <AddNoteForm assessmentId={assessment.id} />
-                      </CardContent>
-                    </Card>
-                  </TabsContent>
-                </Tabs>
-              </>
-            ) : (
-              <div className="py-12 text-center text-muted-foreground">{t.patient.noAssessments}</div>
-            )}
-          </CardContent>
-        </Card>
+                            {med.status === "new" && (
+                              <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-400 text-[9px] px-1.5 py-0">
+                                {t.patient.medicationStatus.new}
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Stopped Medications */}
+                {stoppedMedications.length > 0 && (
+                  <Card className="border-border bg-card shadow-sm">
+                    <CardHeader className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <PillIcon className="size-4 text-muted-foreground opacity-60" />
+                        <CardTitle className="text-sm font-semibold opacity-60">{t.patient.stoppedMedications}</CardTitle>
+                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                          {stoppedMedications.length}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                      {stoppedMedications.map((med) => (
+                        <div key={med.id} className="rounded-lg border border-border bg-muted/20 p-3 space-y-1">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-xs font-semibold opacity-60">{med.medication_name}</h4>
+                              <div className="text-[10px] text-muted-foreground">
+                                {med.dosage && <span>{med.dosage}</span>}
+                              </div>
+                              {med.stop_date && (
+                                <div className="text-[10px] text-muted-foreground">
+                                  {t.patient.stopDate}: {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}
+                                </div>
+                              )}
+                              {med.notes && <p className="text-[10px] text-muted-foreground mt-1">{med.notes}</p>}
+                            </div>
+                            <Badge variant="outline" className="border-muted-foreground/30 text-muted-foreground text-[9px] px-1.5 py-0">
+                              {t.patient.medicationStatus.stopped}
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="py-12 text-center text-muted-foreground">{t.patient.noAssessments}</div>
+        )}
       </div>
     </div>
   )
