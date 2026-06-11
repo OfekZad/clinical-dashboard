@@ -138,7 +138,8 @@ export default function SurveyPage() {
             <p className="text-muted-foreground">{t.survey.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>

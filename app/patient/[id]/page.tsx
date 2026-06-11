@@ -226,7 +226,8 @@ export default async function PatientDetailPage({
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>
@@ -250,7 +251,8 @@ export default async function PatientDetailPage({
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <ShareSurveyButton patientId={patient.id} patientName={patient.name} />
+                {/* Survey Link — hidden */}
+                {/* <ShareSurveyButton patientId={patient.id} patientName={patient.name} /> */}
                 {assessment && !assessment.reviewed && <MarkReviewedButton assessmentId={assessment.id} />}
               </div>
             </div>

@@ -5,7 +5,7 @@ import he from "@/lang/he.json"
 
 export type Locale = "he" | "en"
 
-export const defaultLocale: Locale = "he"
+export const defaultLocale: Locale = "en"
 
 export const locales: Locale[] = ["he", "en"]
 
@@ -35,8 +35,8 @@ export function getStrings(locale: Locale): Strings {
   return translations[locale] ?? he
 }
 
-// Backwards-compatible default export of Hebrew strings
-export const t = he
+// Backwards-compatible default export of English strings
+export const t = en
 
 export type FrequencyKey = "none" | "sometimes" | "half" | "most" | "all" | "not_applicable"
 
