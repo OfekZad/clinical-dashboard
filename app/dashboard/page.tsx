@@ -136,9 +136,12 @@ export default async function DashboardPage() {
         <div className="flex items-start justify-between gap-4">
           <div className="space-y-2">
             <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">
-                {t.dashboard.title}
+                Hello Dr. Miller
             </h1>
             <p className="text-muted-foreground text-pretty">{t.dashboard.subtitle}</p>
+          </div>
+          <div className="flex items-center justify-center">
+            <p className="text-lg font-semibold text-foreground/80">{t.dashboard.title}</p>
           </div>
           <div className="flex items-center gap-2">
             <JoyIndicator />
