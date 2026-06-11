@@ -34,6 +34,8 @@ the consolidated script is enough:
    `ON CONFLICT (id) DO NOTHING`), safe to re-run.
 2. `scripts/08-add-fk-indexes.sql` — adds covering indexes for foreign keys
    flagged by the performance advisor.
+3. `scripts/09-add-call-attempts.sql` — adds the `call_attempts` table used by
+   the outbound voice agent ("Joy") as its durable per-patient call log.
 
 Scripts `01`–`06` document the incremental schema history; `07` supersedes them
 for a fresh setup.
@@ -52,6 +54,7 @@ for a fresh setup.
 | `assessment_timings` | Time-saved metrics (AI vs. survey) |
 | `practice_metrics` | Daily practice ROI roll-ups |
 | `patient_engagement` | Per-patient engagement / streak tracking |
+| `call_attempts` | Outbound voice-agent call log: one row per call with status, transcript, summary, carry-forward items, and medication adherence |
 
 ## Retell voice-agent integration
 

@@ -119,6 +119,24 @@ export type MedicationUpdate = {
   notes?: string
 }
 
+export type CallAttempt = {
+  id: string
+  patient_id: string
+  call_number: number
+  assessment_id: string | null
+  dial_call_id: string | null
+  called_at: string
+  status: "completed" | "no_answer" | "declined" | "failed" | "cancelled"
+  duration_seconds: number | null
+  transcript: string | null
+  summary: string | null
+  next_time: string | null
+  medication_adherence: "confirmed" | "changed" | "not_discussed" | null
+  medication_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
 export type AssessmentWithType = Assessment & {
   type: "ai" | "survey"
   date: string
