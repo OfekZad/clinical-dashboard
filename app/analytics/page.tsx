@@ -252,7 +252,8 @@ export default async function AnalyticsPage() {
               <CalendarIcon className="size-3" />
               {t.roi.allTime}
             </Badge>
-            <LanguageToggle />
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>

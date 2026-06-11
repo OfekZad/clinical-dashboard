@@ -76,7 +76,8 @@ export default async function SurveysPage() {
             <h1 className="font-sans text-3xl font-bold tracking-tight">{t.survey.surveysPageTitle}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>

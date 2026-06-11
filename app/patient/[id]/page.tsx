@@ -169,7 +169,8 @@ export default async function PatientDetailPage({
             </Button>
           </Link>
           <div className="flex items-center gap-2">
-            <LanguageToggle />
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>
@@ -190,11 +191,9 @@ export default async function PatientDetailPage({
                   {patient.phone && <span>{patient.phone}</span>}
                 </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {assessments.length} {t.patient.assessments}
-                </span>
-                <ShareSurveyButton patientId={patient.id} patientName={patient.name} />
+              <div className="flex items-center gap-2">
+                {/* Survey Link — hidden */}
+                {/* <ShareSurveyButton patientId={patient.id} patientName={patient.name} /> */}
                 {assessment && !assessment.reviewed && <MarkReviewedButton assessmentId={assessment.id} />}
               </div>
             </div>
