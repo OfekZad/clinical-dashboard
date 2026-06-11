@@ -95,6 +95,10 @@ function makeAssessment(
     "has_screen_intolerance" | "has_night_driving_issues" | "has_wind_sensitivity" | "has_low_humidity_issues"
   >>,
   reviewed: boolean,
+  conditions?: Partial<Pick<
+    Assessment,
+    "has_dry_eye_syndrome" | "has_blepharitis" | "has_mgd"
+  >>,
 ): Assessment {
   return {
     id,
@@ -106,6 +110,9 @@ function makeAssessment(
     has_night_driving_issues: flags.has_night_driving_issues ?? false,
     has_wind_sensitivity: flags.has_wind_sensitivity ?? false,
     has_low_humidity_issues: flags.has_low_humidity_issues ?? false,
+    has_dry_eye_syndrome: conditions?.has_dry_eye_syndrome ?? false,
+    has_blepharitis: conditions?.has_blepharitis ?? false,
+    has_mgd: conditions?.has_mgd ?? false,
     reviewed,
     created_at: daysAgo(daysAgoValue),
   }
@@ -119,7 +126,7 @@ const SEED_RECORDS: SeedPatientRecord[] = [
         has_screen_intolerance: true,
         has_night_driving_issues: true,
         has_low_humidity_issues: true,
-      }, false),
+      }, false, { has_dry_eye_syndrome: true, has_blepharitis: true }),
       makeAssessment("seed-sarah-a1", "seed-sarah", 40, 88, "Severe", {
         has_screen_intolerance: true,
         has_low_humidity_issues: true,
@@ -360,7 +367,7 @@ const SEED_RECORDS: SeedPatientRecord[] = [
         has_night_driving_issues: true,
         has_wind_sensitivity: true,
         has_low_humidity_issues: true,
-      }, false),
+      }, false, { has_dry_eye_syndrome: true, has_mgd: true }),
       makeAssessment("seed-robert-a1", "seed-robert", 30, 60, "Severe", {
         has_screen_intolerance: true,
         has_wind_sensitivity: true,

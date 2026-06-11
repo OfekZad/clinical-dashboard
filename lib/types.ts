@@ -18,6 +18,9 @@ export type Assessment = {
   has_night_driving_issues: boolean
   has_wind_sensitivity: boolean
   has_low_humidity_issues: boolean
+  has_dry_eye_syndrome: boolean
+  has_blepharitis: boolean
+  has_mgd: boolean
   reviewed: boolean
   created_at: string
 }

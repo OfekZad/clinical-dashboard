@@ -130,6 +130,9 @@ async function getPatientDashboardData(): Promise<PatientWithLatestAssessment[]>
             has_night_driving_issues: latest.type === "assessment" ? (latest.data as { has_night_driving_issues?: boolean }).has_night_driving_issues ?? false : false,
             has_wind_sensitivity: latest.type === "assessment" ? (latest.data as { has_wind_sensitivity?: boolean }).has_wind_sensitivity ?? false : false,
             has_low_humidity_issues: latest.type === "assessment" ? (latest.data as { has_low_humidity_issues?: boolean }).has_low_humidity_issues ?? false : false,
+            has_dry_eye_syndrome: latest.type === "assessment" ? (latest.data as { has_dry_eye_syndrome?: boolean }).has_dry_eye_syndrome ?? false : false,
+            has_blepharitis: latest.type === "assessment" ? (latest.data as { has_blepharitis?: boolean }).has_blepharitis ?? false : false,
+            has_mgd: latest.type === "assessment" ? (latest.data as { has_mgd?: boolean }).has_mgd ?? false : false,
           }
         : null,
       previous_assessment: previous
@@ -265,6 +268,7 @@ export default async function DashboardPage() {
                     <TableHead className="font-semibold text-foreground">{t.dashboard.severity}</TableHead>
                     <TableHead className="font-semibold text-foreground">{t.dashboard.trend}</TableHead>
                     <TableHead className="font-semibold text-foreground">{t.dashboard.symptoms}</TableHead>
+                    <TableHead className="font-semibold text-foreground">Conditions</TableHead>
                     <TableHead className="font-semibold text-foreground">{t.dashboard.lastVisit}</TableHead>
                     <TableHead className="font-semibold text-foreground">{t.dashboard.status}</TableHead>
                   </TableRow>

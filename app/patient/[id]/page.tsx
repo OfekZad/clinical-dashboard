@@ -7,6 +7,7 @@ import {
   ArrowLeftIcon, MonitorIcon, MoonIcon, WindIcon, DropletIcon,
   TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronRightIcon,
   ActivityIcon, PillIcon, StethoscopeIcon,
+  EyeIcon, ScanEyeIcon, DropletsIcon,
 } from "lucide-react"
 import Link from "next/link"
 import { AddNoteForm } from "@/components/add-note-form"
@@ -60,6 +61,7 @@ async function fetchPatientDetail(patientId: string, assessmentId?: string) {
       total_score: s.total_score!, severity_level: s.severity_level!,
       has_screen_intolerance: false, has_night_driving_issues: false,
       has_wind_sensitivity: false, has_low_humidity_issues: false,
+      has_dry_eye_syndrome: false, has_blepharitis: false, has_mgd: false,
       reviewed: true, created_at: s.created_at, type: "survey" as const, date: s.survey_date,
     })),
   ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -220,16 +222,16 @@ export default async function PatientDetailPage({
 
               {/* Right Column: Symptoms, History, Medications */}
               <div className="space-y-4">
-                {/* Symptom Flags - inline chips */}
+                {/* Symptom Flags - compact chips */}
                 <Card className="border-border bg-card shadow-sm">
-                  <CardHeader className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <ActivityIcon className="size-3.5 text-muted-foreground" />
-                      <CardTitle className="text-xs font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
+                  <CardHeader className="px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <ActivityIcon className="size-3 text-muted-foreground" />
+                      <CardTitle className="text-[11px] font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-4 pb-3 pt-0">
-                    <div className="flex flex-wrap gap-1.5">
+                  <CardContent className="px-3 pb-2 pt-0">
+                    <div className="flex flex-wrap gap-1">
                       {[
                         { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort, color: "amber" },
                         { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort, color: "blue" },
@@ -238,14 +240,47 @@ export default async function PatientDetailPage({
                       ].map(({ flag, icon: Icon, label, color }) => (
                         <div
                           key={label}
-                          className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${
+                          className={`inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 transition-all ${
                             flag
                               ? `border-${color}-300 bg-${color}-50 dark:border-${color}-800 dark:bg-${color}-950/30`
                               : "border-border bg-accent/20 opacity-50"
                           }`}
                         >
-                          <Icon className={`size-3 shrink-0 ${flag ? `text-${color}-600 dark:text-${color}-400` : "text-muted-foreground"}`} />
-                          <span className={`text-[10px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                          <Icon className={`size-2.5 shrink-0 ${flag ? `text-${color}-600 dark:text-${color}-400` : "text-muted-foreground"}`} />
+                          <span className={`text-[9px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>
+                            {flag ? label : `No ${label}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Conditions - larger, more prominent */}
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <ScanEyeIcon className="size-4 text-muted-foreground" />
+                      <CardTitle className="text-sm font-bold">{t.patient.conditionsTitle}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-4 pb-4 pt-0">
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { flag: assessment.has_dry_eye_syndrome, icon: EyeIcon, label: t.patient.conditionDryEye, color: "emerald" },
+                        { flag: assessment.has_blepharitis, icon: ScanEyeIcon, label: t.patient.conditionBlepharitis, color: "violet" },
+                        { flag: assessment.has_mgd, icon: DropletsIcon, label: t.patient.conditionMGD, color: "rose" },
+                      ].map(({ flag, icon: Icon, label, color }) => (
+                        <div
+                          key={label}
+                          className={`inline-flex items-center gap-1.5 rounded-lg border-2 px-3 py-1.5 transition-all ${
+                            flag
+                              ? `border-${color}-400 bg-${color}-50 shadow-sm dark:border-${color}-700 dark:bg-${color}-950/40`
+                              : "border-border bg-accent/20 opacity-40"
+                          }`}
+                        >
+                          <Icon className={`size-5 shrink-0 ${flag ? `text-${color}-600 dark:text-${color}-400` : "text-muted-foreground"}`} />
+                          <span className={`text-xs whitespace-nowrap ${flag ? "font-bold text-foreground" : "text-muted-foreground"}`}>
                             {flag ? label : `No ${label}`}
                           </span>
                         </div>
