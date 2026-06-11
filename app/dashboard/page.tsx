@@ -215,73 +215,76 @@ export default async function DashboardPage() {
           <div className="space-y-2">
             <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">
                 {t.dashboard.title}
-                <sup className="ml-2 text-xs font-normal text-muted-foreground align-top">v1.0</sup>
             </h1>
             <p className="text-muted-foreground text-pretty">{t.dashboard.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/analytics">
+            {/* ROI Analytics — hidden */}
+            {/* <Link href="/analytics">
               <button className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium hover:bg-accent transition-colors">
                 <BarChart3Icon className="size-4" />
                 {t.dashboard.roiAnalytics}
               </button>
-            </Link>
-            <ShareSurveyButton />
-            <LanguageToggle />
+            </Link> */}
+            {/* Survey Link — hidden */}
+            {/* <ShareSurveyButton /> */}
+            {/* Language Toggle — hidden, English is default */}
+            {/* <LanguageToggle /> */}
             <ThemeToggle />
           </div>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          <Card className="border-border bg-card transition-all hover:border-primary/50">
-            <CardContent className="flex items-start justify-between p-6">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{t.dashboard.totalPatients}</p>
-                <p className="font-mono text-3xl font-bold tracking-tight">{totalPatients}</p>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 justify-center">
+          <Card className="border-border bg-card transition-all hover:border-primary/50 py-2">
+            <CardContent className="flex items-start justify-between px-4 py-1.5">
+              <div className="space-y-0">
+                <p className="text-xs font-medium text-muted-foreground">{t.dashboard.totalPatients}</p>
+                <p className="font-mono text-2xl font-bold tracking-tight">{totalPatients}</p>
               </div>
-              <div className="rounded-lg bg-primary/10 p-3">
-                <UsersIcon className="size-5 text-primary" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card transition-all hover:border-warning/50">
-            <CardContent className="flex items-start justify-between p-6">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{t.dashboard.needsReview}</p>
-                <p className="font-mono text-3xl font-bold tracking-tight text-warning">{needsReview}</p>
-              </div>
-              <div className="rounded-lg bg-warning/10 p-3">
-                <AlertCircleIcon className="size-5 text-warning" />
+              <div className="rounded-lg bg-primary/10 p-1.5">
+                <UsersIcon className="size-4 text-primary" />
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card transition-all hover:border-destructive/50">
-            <CardContent className="flex items-start justify-between p-6">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{t.dashboard.severeCases}</p>
-                <p className="font-mono text-3xl font-bold tracking-tight text-destructive">{severeCases}</p>
+          <Card className="border-border bg-card transition-all hover:border-warning/50 py-2">
+            <CardContent className="flex items-start justify-between px-4 py-1.5">
+              <div className="space-y-0">
+                <p className="text-xs font-medium text-muted-foreground">{t.dashboard.needsReview}</p>
+                <p className="font-mono text-2xl font-bold tracking-tight text-warning">{needsReview}</p>
               </div>
-              <div className="rounded-lg bg-destructive/10 p-3">
-                <ActivityIcon className="size-5 text-destructive" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-border bg-card transition-all hover:border-success/50">
-            <CardContent className="flex items-start justify-between p-6">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-muted-foreground">{t.dashboard.improving}</p>
-                <p className="font-mono text-3xl font-bold tracking-tight text-success">{improving}</p>
-              </div>
-              <div className="rounded-lg bg-success/10 p-3">
-                <CheckCircleIcon className="size-5 text-success" />
+              <div className="rounded-lg bg-warning/10 p-1.5">
+                <AlertCircleIcon className="size-4 text-warning" />
               </div>
             </CardContent>
           </Card>
 
-          <Link href="/surveys">
+          <Card className="border-border bg-card transition-all hover:border-destructive/50 py-2">
+            <CardContent className="flex items-start justify-between px-4 py-1.5">
+              <div className="space-y-0">
+                <p className="text-xs font-medium text-muted-foreground">{t.dashboard.severeCases}</p>
+                <p className="font-mono text-2xl font-bold tracking-tight text-destructive">{severeCases}</p>
+              </div>
+              <div className="rounded-lg bg-destructive/10 p-1.5">
+                <ActivityIcon className="size-4 text-destructive" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border bg-card transition-all hover:border-success/50 py-2">
+            <CardContent className="flex items-start justify-between px-4 py-1.5">
+              <div className="space-y-0">
+                <p className="text-xs font-medium text-muted-foreground">{t.dashboard.improving}</p>
+                <p className="font-mono text-2xl font-bold tracking-tight text-success">{improving}</p>
+              </div>
+              <div className="rounded-lg bg-success/10 p-1.5">
+                <CheckCircleIcon className="size-4 text-success" />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Surveys Received — hidden */}
+          {/* <Link href="/surveys">
             <Card className="h-full border-border bg-card transition-all hover:border-info/50 cursor-pointer">
               <CardContent className="flex items-start justify-between p-6">
                 <div className="space-y-1">
@@ -293,7 +296,7 @@ export default async function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-          </Link>
+          </Link> */}
         </div>
 
         <Card className="border-border bg-card">
