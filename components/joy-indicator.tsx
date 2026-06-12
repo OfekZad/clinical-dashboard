@@ -133,7 +133,11 @@ export function JoyIndicator() {
             config.pulseClass,
           )}
         />
-        <span className="relative text-sm leading-none">{config.emoji}</span>
+        <img
+          src="/dialdoc.png"
+          alt="Joy"
+          className="relative size-5 rounded-full object-cover"
+        />
         <span className="relative hidden sm:inline">{config.label}</span>
         <span className="relative text-[10px] opacity-60 transition-opacity group-hover:opacity-100">
           ℹ️
