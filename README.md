@@ -114,14 +114,6 @@ Three runtimes, one source of truth: the **orchestrator** owns the workflow (pla
 
 Would this be impressive without the phone? It wouldn't *exist* without the phone.
 
-## Verify it yourself (judges)
-
-- **Joy's number:** +1 (912) 662-0889 (Dial)
-- **Voice brain:** `wss://huodjyassgsrxpvaxkaa.supabase.co/functions/v1/joy-voice` (HMAC-signed, Dial self-hosted protocol)
-- **Models:** `claude-fable-5` (effort=low) for speech + scoring on voice; `claude-haiku-4-5` for SMS
-- **Data:** Supabase project `huodjyassgsrxpvaxkaa` — every metric in the table above is a row you can query
-- **Contact:** Ofek · ofekz555@gmail.com
-
 ## Repo tour
 
 ```
