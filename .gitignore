@@ -25,3 +25,22 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local env/secrets (keep .env.example committed)
+.env
+.env.local
+.env.*
+!.env.example
+*.env
+dashboard.env
+auth.v1.json
+.local/
+
+# package manager logs
+pnpm-debug.log*
+
+# macOS
+.DS_Store
+
+# build output
+dist/

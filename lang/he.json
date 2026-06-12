@@ -96,6 +96,8 @@
     "startDate": "תאריך התחלה",
     "stopDate": "תאריך הפסקה",
     "medicationNotes": "הערות",
+    "remainingMedicineNumber": "כמות תרופה שנותרה",
+    "remainingMedicineHelp": "Joy שולחת SMS ב-7 או פחות",
     "medicationStatus": {
       "active": "פעיל",
       "stopped": "הופסק",

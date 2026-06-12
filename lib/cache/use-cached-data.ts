@@ -92,31 +92,42 @@ export function useCachedDashboardPatients(): PatientWithLatestAssessment[] {
     const assessments = Object.values(cache.assessments)
     const surveys = Object.values(cache.patient_surveys).filter((s) => s.status === "scored" && s.total_score !== null)
 
-    // Group by patient_id
-    const byPatient: Record<string, Array<{ date: Date; score: number; severity: string; reviewed: boolean; data: any }>> = {}
+    type DashboardScore = {
+      date: Date
+      assessment: Assessment
+    }
 
-    for (const a of assessments) {
-      if (!byPatient[a.patient_id]) byPatient[a.patient_id] = []
-      byPatient[a.patient_id].push({
-        date: new Date(a.assessment_date),
-        score: a.total_score,
-        severity: a.severity_level,
-        reviewed: a.reviewed,
-        data: a,
+    // Group by patient_id
+    const byPatient: Record<string, DashboardScore[]> = {}
+
+    for (const assessment of assessments) {
+      if (!byPatient[assessment.patient_id]) byPatient[assessment.patient_id] = []
+      byPatient[assessment.patient_id].push({
+        date: new Date(assessment.assessment_date),
+        assessment,
       })
     }
 
-    for (const s of surveys) {
-      if (s.patient_id && !byPatient[s.patient_id]) byPatient[s.patient_id] = []
-      if (s.patient_id) {
-        byPatient[s.patient_id].push({
-          date: new Date(s.survey_date),
-          score: s.total_score!,
-          severity: s.severity_level!,
+    for (const survey of surveys) {
+      if (!survey.patient_id || survey.total_score === null || survey.severity_level === null) continue
+
+      if (!byPatient[survey.patient_id]) byPatient[survey.patient_id] = []
+      byPatient[survey.patient_id].push({
+        date: new Date(survey.survey_date),
+        assessment: {
+          id: survey.id,
+          patient_id: survey.patient_id,
+          assessment_date: survey.survey_date,
+          total_score: survey.total_score,
+          severity_level: survey.severity_level,
+          has_screen_intolerance: false,
+          has_night_driving_issues: false,
+          has_wind_sensitivity: false,
+          has_low_humidity_issues: false,
           reviewed: true,
-          data: s,
-        })
-      }
+          created_at: survey.created_at,
+        },
+      })
     }
 
     // Sort each patient's scores newest-first
@@ -131,22 +142,8 @@ export function useCachedDashboardPatients(): PatientWithLatestAssessment[] {
 
       return {
         ...p,
-        latest_assessment: latest
-          ? {
-              id: latest.data.id,
-              total_score: latest.score,
-              severity_level: latest.severity,
-              reviewed: latest.reviewed,
-              assessment_date: latest.date.toISOString(),
-              has_screen_intolerance: latest.data.has_screen_intolerance ?? false,
-              has_night_driving_issues: latest.data.has_night_driving_issues ?? false,
-              has_wind_sensitivity: latest.data.has_wind_sensitivity ?? false,
-              has_low_humidity_issues: latest.data.has_low_humidity_issues ?? false,
-            }
-          : null,
-        previous_assessment: previous
-          ? { total_score: previous.score }
-          : null,
+        latest_assessment: latest?.assessment ?? null,
+        previous_assessment: previous?.assessment ?? null,
       }
     })
   }, [cache.patients, cache.assessments, cache.patient_surveys])

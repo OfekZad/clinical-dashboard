@@ -34,6 +34,9 @@ the consolidated script is enough:
    `ON CONFLICT (id) DO NOTHING`), safe to re-run.
 2. `scripts/08-add-fk-indexes.sql` — adds covering indexes for foreign keys
    flagged by the performance advisor.
+3. `scripts/09-add-joy-refill-assistant.sql` — adds Joy SMS refill workflow
+   medication identity fields, conversations, refill requests, staff tasks, and
+   audit logs.
 
 Scripts `01`–`06` document the incremental schema history; `07` supersedes them
 for a fresh setup.
@@ -52,6 +55,44 @@ for a fresh setup.
 | `assessment_timings` | Time-saved metrics (AI vs. survey) |
 | `practice_metrics` | Daily practice ROI roll-ups |
 | `patient_engagement` | Per-patient engagement / streak tracking |
+| `joy_refill_conversations` | Joy SMS refill conversation state |
+| `joy_sms_messages` | Inbound/outbound SMS conversation history |
+| `joy_refill_requests` | Refill requests created or tracked by Joy |
+| `joy_staff_tasks` | Human follow-up tasks for escalation |
+| `joy_audit_logs` | Compliance audit trail for Joy database actions |
+
+
+## Joy SMS refill assistant
+
+Joy starts refill outreach with `POST /api/joy/refill/trigger` using
+`patientId`, `patientMedicationId`, and optional `smsTo`. Joy will only send
+the initial SMS when the medication's editable remaining number is **7 or
+fewer**. Clinic users can edit that number from the patient medication card;
+updates are saved to `remaining_quantity`, refresh `low_medication_flag`, and
+write a Joy audit log entry. Incoming SMS replies are processed by
+`POST /api/joy/sms` using `conversationId`, `body`, and optional
+`externalMessageId`.
+
+Set `JOY_SMS_WEBHOOK_URL` to connect a generic approved SMS provider. Joy posts
+`{ to, body, from }` to that webhook and stores the returned `messageId` when
+available. Set `JOY_SMS_FROM_NUMBER` when the SMS provider requires a sender
+number.
+
+For Vapi SMS delivery, set `JOY_SMS_PROVIDER=vapi`, `VAPI_API_KEY`,
+`VAPI_PHONE_NUMBER_ID`, and `VAPI_ASSISTANT_ID`. Joy uses Vapi's Chat API SMS
+transport with `useLLMGeneratedMessageForOutbound: false` so the refill text is
+sent directly instead of rewritten by an LLM. Do not commit live API keys to the
+repository. If neither a webhook nor Vapi is configured, the app records the
+outbound message and logs delivery details to the server console only.
+
+Joy does not make clinical decisions. Clinical questions, side effects,
+medication confusion, pharmacy changes, ineligible medications, missing
+pharmacy data, and patient requests for staff create `joy_staff_tasks` and mark
+the conversation escalated.
+
+## Joy Voice System setup
+
+For the Dial / Supabase Edge Function voice architecture, required APIs, secrets, CLI commands, and dependency rules, see `docs/joy-voice-system-setup.md`.
 
 ## Retell voice-agent integration
 

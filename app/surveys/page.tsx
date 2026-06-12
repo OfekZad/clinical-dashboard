@@ -1,5 +1,5 @@
 import { createServerClient } from "@/lib/supabase/server"
-import type { PatientSurveyWithResponses } from "@/lib/types"
+import type { PatientSurveyWithResponses, SurveyResponse } from "@/lib/types"
 import { Card, CardContent } from "@/components/ui/card"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
@@ -35,7 +35,7 @@ async function getPendingSurveys(): Promise<PatientSurveyWithResponses[]> {
     .order("question_number", { ascending: true })
 
   // Group responses by survey_id in-memory
-  const responsesBySurveyId: Record<string, typeof allResponses> = {}
+  const responsesBySurveyId: Record<string, SurveyResponse[]> = {}
   for (const r of allResponses || []) {
     if (!responsesBySurveyId[r.survey_id]) responsesBySurveyId[r.survey_id] = []
     responsesBySurveyId[r.survey_id].push(r)
