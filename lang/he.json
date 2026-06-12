@@ -100,7 +100,9 @@
       "active": "פעיל",
       "stopped": "הופסק",
       "new": "חדש"
-    }
+    },
+    "scoreTrend": "מגמת ניקוד",
+    "scoreTrendDescription": "מגמת ניקוד OSDI לאורך זמן"
   },
   "survey": {
     "title": "שאלון הערכת עיניים יבשות",

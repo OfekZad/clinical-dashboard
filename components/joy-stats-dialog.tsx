@@ -85,9 +85,11 @@ export function JoyStatsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
-            <span className="text-3xl" role="img" aria-label="Joy">
-              🤖
-            </span>
+            <img
+              src="/dialdoc.png"
+              alt="Joy"
+              className="size-14 rounded-full object-cover ring-2 ring-emerald-200 dark:ring-emerald-800"
+            />
             <div>
               <DialogTitle className="text-xl">Joy — AI Agent</DialogTitle>
               <DialogDescription className="flex items-center gap-1.5 mt-0.5">

@@ -13,6 +13,9 @@ import {
   ActivityIcon, PillIcon, StethoscopeIcon, MessageSquareQuoteIcon,
   BrainIcon, ListChecksIcon,
 } from "lucide-react"
+import {
+  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from "recharts"
 import Link from "next/link"
 import { AddNoteForm } from "@/components/add-note-form"
 import { MarkReviewedButton } from "@/components/mark-reviewed-button"
@@ -64,6 +67,87 @@ function getTrendIndicator(currentScore: number, previousScore: number | null) {
   if (diff > 5) return { icon: TrendingUpIcon, label: "Worsening", color: "text-destructive" }
   if (diff < -5) return { icon: TrendingDownIcon, label: "Improving", color: "text-success" }
   return { icon: MinusIcon, label: "Stable", color: "text-muted-foreground" }
+}
+
+function ScoreTrendChart({ items, locale, t }: { items: AssessmentWithType[]; locale: Locale; t: { scoreTrend: string } }) {
+  // Sort chronologically (oldest first) for the line chart
+  const chartData = useMemo(() => {
+    return [...items]
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+      .map((item) => {
+        const d = new Date(item.date)
+        return {
+          date: d.toLocaleDateString(localeTag[locale], {
+            month: "short",
+            day: "numeric",
+          }),
+          time: d.toLocaleTimeString(localeTag[locale], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          score: item.total_score,
+          fullDate: item.date,
+        }
+      })
+  }, [items, locale])
+
+  if (chartData.length < 2) return null
+
+  return (
+    <div className="mt-4 pt-3 border-t border-border">
+      <div className="flex items-center gap-2 mb-2">
+        <TrendingUpIcon className="size-3.5 text-muted-foreground" />
+        <span className="text-xs font-medium text-muted-foreground">{t.scoreTrend}</span>
+      </div>
+      <div className="w-full h-[120px]">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: -20 }}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+            <XAxis
+              dataKey="date"
+              tick={{ fontSize: 9, fill: "#888", className: "fill-muted-foreground" }}
+              tickLine={false}
+              axisLine={false}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              domain={[0, "auto"]}
+              allowDecimals={false}
+              tick={{ fontSize: 10, fill: "#888" }}
+              tickLine={false}
+              axisLine={false}
+              width={40}
+              tickCount={6}
+            />
+            <Tooltip
+              contentStyle={{
+                fontSize: 11,
+                borderRadius: "6px",
+                border: "1px solid hsl(var(--border))",
+                background: "hsl(var(--popover))",
+                color: "hsl(var(--popover-foreground))",
+              }}
+              labelStyle={{ fontWeight: 600, marginBottom: 2 }}
+              formatter={(value: number) => [`Score: ${value}`]}
+              labelFormatter={(_label, payload) => {
+                if (!payload?.length) return ""
+                const d = payload[0].payload
+                return `${d.date} ${d.time}`
+              }}
+            />
+            <Line
+              type="monotone"
+              dataKey="score"
+              stroke="#8884d8"
+              strokeWidth={2.5}
+              dot={{ r: 3, fill: "#8884d8" }}
+              activeDot={{ r: 4, fill: "#8884d8" }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  )
 }
 
 interface Props {
@@ -254,6 +338,7 @@ export function CachedPatientContent({ patientId }: Props) {
                     {allItems.length > 8 && (
                       <p className="text-[10px] text-center text-muted-foreground">+{allItems.length - 8} more</p>
                     )}
+                    <ScoreTrendChart items={allItems} locale={locale} t={{ scoreTrend: t.patient.scoreTrend }} />
                   </CardContent>
                 </Card>
               </div>
