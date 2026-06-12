@@ -8,6 +8,8 @@ import type {
   Patient,
 } from "@/lib/types"
 
+import { JOY_LOW_MEDICATION_THRESHOLD } from "@/lib/joy-constants"
+
 type JsonObject = Record<string, unknown>
 
 type JoyContext = {
@@ -21,6 +23,13 @@ export type JoySmsDelivery = {
   body: string
   provider: "configured_webhook" | "console"
   externalMessageId: string | null
+}
+
+export class JoyRefillThresholdError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = "JoyRefillThresholdError"
+  }
 }
 
 export type JoyReplyResult = {
@@ -95,8 +104,8 @@ export function getMedicationIdentity(medication: JoyPatientMedication): JoyMedi
     quantity_prescribed: medication.quantity_prescribed,
     remaining_quantity: medication.remaining_quantity,
     estimated_supply_days: medication.estimated_supply_days,
-    refill_eligibility_status: medication.refill_eligibility_status,
-    prescription_status: medication.prescription_status,
+    refill_eligibility_status: medication.refill_eligibility_status ?? "staff_review",
+    prescription_status: medication.prescription_status ?? "unknown",
     prescribing_provider: medication.prescribing_provider,
     preferred_pharmacy: medication.preferred_pharmacy,
     pharmacy_phone: medication.pharmacy_phone,
@@ -107,6 +116,18 @@ export function getMedicationIdentity(medication: JoyPatientMedication): JoyMedi
     ndc_code: medication.ndc_code,
     external_medication_identifiers: medication.external_medication_identifiers ?? {},
   }
+}
+
+
+export function getMedicationRemainingNumber(medication: JoyPatientMedication): number | null {
+  if (typeof medication.remaining_quantity === "number") return medication.remaining_quantity
+  if (typeof medication.estimated_supply_days === "number") return medication.estimated_supply_days
+  return null
+}
+
+export function isMedicationAtJoySmsThreshold(medication: JoyPatientMedication): boolean {
+  const medicationNumber = getMedicationRemainingNumber(medication)
+  return medicationNumber !== null && medicationNumber <= JOY_LOW_MEDICATION_THRESHOLD
 }
 
 export function formatMedicationForSms(medication: JoyPatientMedication): string {
@@ -212,13 +233,34 @@ export async function startJoyRefillConversation(
   if (patientError || !patient) throw new Error("Patient not found")
   if (medicationError || !medication) throw new Error("Medication record not found")
 
+  const joyMedication = medication as JoyPatientMedication
+  const medicationNumber = getMedicationRemainingNumber(joyMedication)
+
+  if (!isMedicationAtJoySmsThreshold(joyMedication)) {
+    await logAudit(supabase, {
+      patientId: patient.id,
+      patientMedicationId: medication.id,
+      conversationId: null,
+      actionType: "skip_initial_sms_above_threshold",
+      outcome: "not_sent",
+      details: {
+        medicationNumber,
+        threshold: JOY_LOW_MEDICATION_THRESHOLD,
+      },
+    })
+
+    throw new JoyRefillThresholdError(
+      `Joy only sends refill SMS messages when the medication number is ${JOY_LOW_MEDICATION_THRESHOLD} or less.`,
+    )
+  }
+
   await logAudit(supabase, {
     patientId: patient.id,
     patientMedicationId: medication.id,
     conversationId: null,
     actionType: "read_medication_identity",
     outcome: "success",
-    details: { medicationIdentity: getMedicationIdentity(medication as JoyPatientMedication) },
+    details: { medicationIdentity: getMedicationIdentity(joyMedication), medicationNumber, threshold: JOY_LOW_MEDICATION_THRESHOLD },
   })
 
   const { data: conversation, error: conversationError } = await supabase
@@ -243,7 +285,7 @@ export async function startJoyRefillConversation(
     outcome: "success",
   })
 
-  const body = buildInitialRefillSms(patient, medication as JoyPatientMedication)
+  const body = buildInitialRefillSms(patient, joyMedication)
   const sms = await sendSms(input.smsTo ?? patient.phone, body)
 
   await storeMessage(supabase, {
@@ -267,7 +309,7 @@ export async function startJoyRefillConversation(
   return {
     conversation: conversation as JoyRefillConversation,
     sms,
-    medicationIdentity: getMedicationIdentity(medication as JoyPatientMedication),
+    medicationIdentity: getMedicationIdentity(joyMedication),
   }
 }
 
@@ -287,6 +329,27 @@ async function loadContext(supabase: SupabaseClient, conversationId: string): Pr
 
   if (patientError || !patient) throw new Error("Patient not found")
   if (medicationError || !medication) throw new Error("Medication record not found")
+
+  const joyMedication = medication as JoyPatientMedication
+  const medicationNumber = getMedicationRemainingNumber(joyMedication)
+
+  if (!isMedicationAtJoySmsThreshold(joyMedication)) {
+    await logAudit(supabase, {
+      patientId: patient.id,
+      patientMedicationId: medication.id,
+      conversationId: null,
+      actionType: "skip_initial_sms_above_threshold",
+      outcome: "not_sent",
+      details: {
+        medicationNumber,
+        threshold: JOY_LOW_MEDICATION_THRESHOLD,
+      },
+    })
+
+    throw new JoyRefillThresholdError(
+      `Joy only sends refill SMS messages when the medication number is ${JOY_LOW_MEDICATION_THRESHOLD} or less.`,
+    )
+  }
 
   await logAudit(supabase, {
     patientId: patient.id,
@@ -467,12 +530,13 @@ export async function handleJoyInboundSms(
       return escalate(supabase, context, "missing_preferred_pharmacy", undefined, intent)
     }
 
-    if (context.medication.prescription_status !== "active") {
+    if ((context.medication.prescription_status ?? "unknown") !== "active") {
       return escalate(supabase, context, "inactive_or_expired_prescription", undefined, intent)
     }
 
-    if (context.medication.refill_eligibility_status !== "eligible") {
-      return escalate(supabase, context, context.medication.refill_eligibility_status, undefined, intent)
+    const refillEligibilityStatus = context.medication.refill_eligibility_status ?? "staff_review"
+    if (refillEligibilityStatus !== "eligible") {
+      return escalate(supabase, context, refillEligibilityStatus, undefined, intent)
     }
 
     const { data: refillRequest, error: refillError } = await supabase

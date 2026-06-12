@@ -65,9 +65,13 @@ for a fresh setup.
 ## Joy SMS refill assistant
 
 Joy starts refill outreach with `POST /api/joy/refill/trigger` using
-`patientId`, `patientMedicationId`, and optional `smsTo`. Incoming SMS replies
-are processed by `POST /api/joy/sms` using `conversationId`, `body`, and
-optional `externalMessageId`.
+`patientId`, `patientMedicationId`, and optional `smsTo`. Joy will only send
+the initial SMS when the medication's editable remaining number is **7 or
+fewer**. Clinic users can edit that number from the patient medication card;
+updates are saved to `remaining_quantity`, refresh `low_medication_flag`, and
+write a Joy audit log entry. Incoming SMS replies are processed by
+`POST /api/joy/sms` using `conversationId`, `body`, and optional
+`externalMessageId`.
 
 Set `JOY_SMS_WEBHOOK_URL` to connect an approved SMS provider. Joy posts
 `{ to, body, from }` to that webhook and stores the returned `messageId` when

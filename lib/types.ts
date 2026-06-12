@@ -105,6 +105,28 @@ export type PatientMedication = {
   start_date: string | null
   stop_date: string | null
   notes: string | null
+  internal_medication_id?: string | null
+  generic_name?: string | null
+  brand_name?: string | null
+  dosage_strength?: string | null
+  dosage_form?: string | null
+  prescribed_instructions?: string | null
+  quantity_prescribed?: number | null
+  remaining_quantity?: number | null
+  estimated_supply_days?: number | null
+  refill_eligibility_status?: RefillEligibilityStatus
+  prescription_status?: PrescriptionStatus
+  prescribing_provider?: string | null
+  preferred_pharmacy?: string | null
+  pharmacy_phone?: string | null
+  pharmacy_system_id?: string | null
+  last_refill_date?: string | null
+  next_expected_refill_date?: string | null
+  rxnorm_code?: string | null
+  ndc_code?: string | null
+  external_medication_identifiers?: Record<string, unknown>
+  low_medication_flag?: boolean
+  low_medication_detected_at?: string | null
   created_at: string
   updated_at: string
 }

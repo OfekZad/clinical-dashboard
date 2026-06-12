@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { startJoyRefillConversation } from "@/lib/joy-refill-assistant"
+import { JoyRefillThresholdError, startJoyRefillConversation } from "@/lib/joy-refill-assistant"
 import { createServerClient, isSupabaseConfigured } from "@/lib/supabase/server"
 
 export async function POST(request: Request) {
@@ -33,6 +33,10 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true, ...result })
   } catch (error) {
+    if (error instanceof JoyRefillThresholdError) {
+      return NextResponse.json({ success: false, error: error.message }, { status: 409 })
+    }
+
     console.error("Joy refill trigger error:", error)
     return NextResponse.json({ success: false, error: "Failed to start Joy refill conversation" }, { status: 500 })
   }
