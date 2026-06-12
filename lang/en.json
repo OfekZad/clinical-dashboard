@@ -100,7 +100,9 @@
       "active": "Active",
       "stopped": "Stopped",
       "new": "New"
-    }
+    },
+    "scoreTrend": "Score Trend",
+    "scoreTrendDescription": "OSDI Score trend over time"
   },
   "survey": {
     "title": "Dry Eye Assessment Survey",
