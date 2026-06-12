@@ -135,10 +135,26 @@ SETUP.md                  Database provisioning + schema overview
 
 ## Running the dashboard locally
 
+**Prerequisites:** Node.js 20+ and [pnpm](https://pnpm.io). If you don't have pnpm yet, the easiest way is through Corepack (ships with Node):
+
 ```bash
-pnpm install
-cp .env.example .env.local   # or create .env.local with the vars below
-pnpm dev                     # http://localhost:3000
+corepack enable pnpm     # or: npm install -g pnpm
+```
+
+Then clone, configure, and run:
+
+```bash
+git clone https://github.com/OfekZad/clinical-dashboard.git
+cd clinical-dashboard
+pnpm install                 # install dependencies
+cp .env.example .env.local   # fill in the vars below (or skip for seed-data mode)
+pnpm dev                     # start the dev server → http://localhost:3000
+```
+
+For a production build:
+
+```bash
+pnpm build && pnpm start
 ```
 
 | Variable | Purpose |
