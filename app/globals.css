@@ -137,3 +137,62 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* ── Joy AI Agent Animations ── */
+
+@keyframes joy-pulse-idle {
+  0%, 100% {
+    box-shadow: 0 0 6px 1px rgba(52, 211, 153, 0.3);
+    background: rgba(52, 211, 153, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px rgba(52, 211, 153, 0.5);
+    background: rgba(52, 211, 153, 0.25);
+  }
+}
+
+@keyframes joy-pulse-call {
+  0%, 100% {
+    box-shadow: 0 0 6px 1px rgba(251, 191, 36, 0.35);
+    background: rgba(251, 191, 36, 0.15);
+  }
+  50% {
+    box-shadow: 0 0 18px 6px rgba(251, 191, 36, 0.6);
+    background: rgba(251, 191, 36, 0.3);
+  }
+}
+
+@keyframes joy-pulse-escalate {
+  0%, 100% {
+    box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.15);
+    transform: scale(1);
+  }
+  25% {
+    box-shadow: 0 0 20px 8px rgba(239, 68, 68, 0.65);
+    background: rgba(239, 68, 68, 0.3);
+    transform: scale(1.03);
+  }
+  50% {
+    box-shadow: 0 0 24px 10px rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+  }
+  75% {
+    box-shadow: 0 0 20px 8px rgba(239, 68, 68, 0.6);
+    background: rgba(239, 68, 68, 0.25);
+    transform: scale(1.02);
+  }
+}
+
+.animate-joy-pulse-idle {
+  animation: joy-pulse-idle 3s ease-in-out infinite;
+}
+
+.animate-joy-pulse-call {
+  animation: joy-pulse-call 2s ease-in-out infinite;
+}
+
+.animate-joy-pulse-escalate {
+  animation: joy-pulse-escalate 1.2s ease-in-out infinite;
+}

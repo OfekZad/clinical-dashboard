@@ -1,0 +1,183 @@
+'use client'
+
+import { useState, useEffect } from "react"
+import { cn } from "@/lib/utils"
+import { JoyStatsDialog } from "./joy-stats-dialog"
+import type { JoyCallStatusResponse } from "@/app/api/joy/call-status/route"
+
+export type JoyState = "idle" | "in_call" | "escalating" | "sms_active"
+
+export interface JoyStats {
+  callsToday: number
+  osdiReportsToday: number
+  escalationsToday: number
+  totalCallTimeMinutes: number
+}
+
+const STATE_CONFIG: Record<
+  JoyState,
+  {
+    emoji: string
+    label: string
+    bgClass: string
+    pulseClass: string
+    textClass: string
+    borderClass: string
+  }
+> = {
+  idle: {
+    emoji: "😴",
+    label: "Idle",
+    bgClass: "bg-emerald-500",
+    pulseClass: "shadow-[0_0_12px_2px] shadow-emerald-400/60",
+    textClass: "text-emerald-700",
+    borderClass: "border-emerald-300",
+  },
+  in_call: {
+    emoji: "📞",
+    label: "In a Call",
+    bgClass: "bg-amber-500",
+    pulseClass: "shadow-[0_0_14px_3px] shadow-amber-400/60",
+    textClass: "text-amber-700",
+    borderClass: "border-amber-300",
+  },
+  escalating: {
+    emoji: "🚨",
+    label: "Escalating",
+    bgClass: "bg-red-500",
+    pulseClass: "shadow-[0_0_16px_4px] shadow-red-400/65",
+    textClass: "text-red-700",
+    borderClass: "border-red-300",
+  },
+  sms_active: {
+    emoji: "💬",
+    label: "Texting",
+    bgClass: "bg-blue-500",
+    pulseClass: "shadow-[0_0_14px_3px] shadow-blue-400/60",
+    textClass: "text-blue-700",
+    borderClass: "border-blue-300",
+  },
+}
+
+// Generate deterministic mock stats for demo purposes
+function generateMockStats(): JoyStats {
+  // Use a seed based on today's date so numbers stay consistent throughout the day
+  const today = new Date()
+  const seed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
+  const pseudoRandom = (n: number) => ((seed * 9301 + 49297) % 233280) / 233280 * n
+
+  return {
+    callsToday: Math.floor(pseudoRandom(18)) + 8,           // 8–25
+    osdiReportsToday: Math.floor(pseudoRandom(12)) + 5,      // 5–16
+    escalationsToday: Math.floor(pseudoRandom(6)) + 1,       // 1–6
+    totalCallTimeMinutes: Math.floor(pseudoRandom(120)) + 45, // 45–164
+  }
+}
+
+export function JoyIndicator() {
+  const [state, setState] = useState<JoyState>("idle")
+  const [statsOpen, setStatsOpen] = useState(false)
+  const [stats] = useState<JoyStats>(generateMockStats)
+
+  // Poll the Supabase-backed API every 1 second to check for active calls.
+  // The /api/joy/call-status endpoint queries the joy_calls table using the
+  // service_role key, so this works regardless of RLS.
+  useEffect(() => {
+    let cancelled = false
+
+    const poll = async () => {
+      try {
+        const res = await fetch("/api/joy/call-status")
+        if (!res.ok) {
+          // If the API is unavailable, stay idle
+          if (!cancelled) setState("idle")
+          return
+        }
+        const data: JoyCallStatusResponse = await res.json()
+
+        if (!cancelled) {
+          if (data.status === "in_progress") {
+            setState("in_call")
+          } else if (data.status === "escalating") {
+            setState("escalating")
+          } else if (data.status === "sms_active") {
+            setState("sms_active")
+          } else {
+            setState("idle")
+          }
+        }
+      } catch {
+        // Network error — stay idle
+        if (!cancelled) setState("idle")
+      }
+    }
+
+    // Poll immediately on mount, then every 1 second
+    poll()
+    const intervalId = setInterval(poll, 1000)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
+  }, [])
+
+  const config = STATE_CONFIG[state]
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setStatsOpen(true)}
+        className={cn(
+          "group relative inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all duration-500 ease-in-out",
+          "hover:scale-105 active:scale-95 cursor-pointer",
+          config.borderClass,
+          config.textClass,
+          "bg-white/90 dark:bg-gray-900/90",
+          "shadow-sm hover:shadow-md",
+        )}
+        aria-label={`Joy AI Agent — ${config.label}. Click to view stats.`}
+        title={`Joy — ${config.label}`}
+      >
+        {/* Animated glow dot */}
+        <span
+          className={cn(
+            "absolute inset-0 rounded-full transition-all duration-700 ease-in-out",
+            state === "idle" && "animate-joy-pulse-idle",
+            state === "in_call" && "animate-joy-pulse-call",
+            state === "escalating" && "animate-joy-pulse-escalate",
+            state === "sms_active" && "animate-joy-pulse-call",
+          )}
+          style={{ opacity: 0.35 }}
+        />
+
+        {/* Static dot + emoji */}
+        <span
+          className={cn(
+            "relative inline-flex size-2.5 rounded-full transition-all duration-500 ease-in-out",
+            config.bgClass,
+            config.pulseClass,
+          )}
+        />
+        <img
+          src="/dialdoc.png"
+          alt="Joy"
+          className="relative size-5 rounded-full object-cover"
+        />
+        <span className="relative hidden sm:inline">{config.label}</span>
+        <span className="relative text-[10px] opacity-60 transition-opacity group-hover:opacity-100">
+          ℹ️
+        </span>
+      </button>
+
+      <JoyStatsDialog
+        open={statsOpen}
+        onOpenChange={setStatsOpen}
+        stats={stats}
+        currentState={state}
+        stateConfig={STATE_CONFIG[state]}
+      />
+    </>
+  )
+}

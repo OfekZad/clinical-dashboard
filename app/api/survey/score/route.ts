@@ -8,13 +8,32 @@ export async function POST(request: Request) {
 
     const supabase = await createServerClient()
 
-    // Update individual response scores
-    for (const [responseId, score] of Object.entries(scores)) {
-      if (score !== null) {
-        await supabase
-          .from("survey_responses")
-          .update({ assigned_score: score as number })
-          .eq("id", responseId)
+    // 🔥 FIX: Replaced N+1 write loop with a single batch update using an RPC.
+    // Instead of one DB call per response, we update all in one query via a
+    // CASE/WHERE bulk pattern (if scores object is non-empty).
+    const scoreEntries = Object.entries(scores).filter(([, score]) => score !== null)
+    if (scoreEntries.length > 0) {
+      // Build a bulk UPDATE by matching on JSON-encoded pairs.
+      // This avoids N individual round-trips.
+      const { error: batchError } = await supabase.rpc("batch_update_survey_scores", {
+        p_updates: scoreEntries.map(([responseId, score]) => ({
+          id: responseId,
+          assigned_score: score,
+        })),
+      })
+
+      // If the RPC doesn't exist yet, fall back to a single-update-per-row approach
+      // but still better than N sequential awaits — we fire them in parallel.
+      if (batchError) {
+        // Fallback: parallel updates (still faster than sequential)
+        await Promise.all(
+          scoreEntries.map(([responseId, score]) =>
+            supabase
+              .from("survey_responses")
+              .update({ assigned_score: score as number })
+              .eq("id", responseId),
+          ),
+        )
       }
     }
 
