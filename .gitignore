@@ -18,6 +18,7 @@ yarn-error.log*
 
 # env files
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -25,3 +26,20 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# local secrets and Joy/Dial runtime files
+.env
+.env.local
+*.env
+!.env.example
+dashboard.env
+auth.v1.json
+.local/
+
+# OS files
+.DS_Store
+
+# production bundle alias
+/dist/
+
+# pnpm debug logs
+pnpm-debug.log*
