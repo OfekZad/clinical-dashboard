@@ -6,6 +6,7 @@ import { getLocale } from "@/lib/locale"
 import { getSeedDashboardPatients, SEED_PENDING_SURVEYS_COUNT } from "@/lib/seed-data"
 import { JoyIndicator } from "@/components/joy-indicator"
 import { CachedDashboardClient } from "@/components/cached-dashboard-client"
+import { RefillRequestsPanel } from "@/components/refill-requests-panel"
 
 async function getPendingSurveysCount(): Promise<number> {
   if (!isSupabaseConfigured()) return SEED_PENDING_SURVEYS_COUNT
@@ -155,6 +156,8 @@ export default async function DashboardPage() {
           serverPendingSurveys={pendingSurveys}
           locale={locale}
         />
+
+        <RefillRequestsPanel />
       </div>
     </div>
   )
