@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { JoyStatsDialog } from "./joy-stats-dialog"
+import type { JoyCallStatusResponse } from "@/app/api/joy/call-status/route"
 
 export type JoyState = "idle" | "in_call" | "escalating"
 
@@ -70,30 +71,45 @@ export function JoyIndicator() {
   const [statsOpen, setStatsOpen] = useState(false)
   const [stats] = useState<JoyStats>(generateMockStats)
 
-  // Simulate state cycling for demonstration purposes.
-  // In production this would be driven by real backend events.
+  // Poll the Supabase-backed API every 1 second to check for active calls.
+  // The /api/joy/call-status endpoint queries the joy_calls table using the
+  // service_role key, so this works regardless of RLS.
   useEffect(() => {
-    const cycle = async () => {
-      // idle for 4–8 seconds
-      await sleep(4000 + Math.random() * 4000)
-      setState("in_call")
-
-      // in a call for 3–6 seconds
-      await sleep(3000 + Math.random() * 3000)
-      setState("escalating")
-
-      // escalating for 1.5–3 seconds
-      await sleep(1500 + Math.random() * 1500)
-      setState("idle")
-    }
     let cancelled = false
-    const run = async () => {
-      while (!cancelled) {
-        await cycle()
+
+    const poll = async () => {
+      try {
+        const res = await fetch("/api/joy/call-status")
+        if (!res.ok) {
+          // If the API is unavailable, stay idle
+          if (!cancelled) setState("idle")
+          return
+        }
+        const data: JoyCallStatusResponse = await res.json()
+
+        if (!cancelled) {
+          if (data.status === "in_progress") {
+            setState("in_call")
+          } else {
+            // For now, 'idle' and 'escalating' both show as idle visually;
+            // the escalating state exists in the config but we don't set it yet.
+            setState("idle")
+          }
+        }
+      } catch {
+        // Network error — stay idle
+        if (!cancelled) setState("idle")
       }
     }
-    run()
-    return () => { cancelled = true }
+
+    // Poll immediately on mount, then every 1 second
+    poll()
+    const intervalId = setInterval(poll, 1000)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+    }
   }, [])
 
   const config = STATE_CONFIG[state]
@@ -153,8 +169,4 @@ export function JoyIndicator() {
       />
     </>
   )
-}
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
 }
