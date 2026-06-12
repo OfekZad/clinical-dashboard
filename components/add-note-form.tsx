@@ -40,19 +40,18 @@ export function AddNoteForm({ assessmentId }: { assessmentId: string }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="space-y-2">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2">
         <Input
           placeholder={t.patient.yourName}
           value={createdBy}
           onChange={(e) => setCreatedBy(e.target.value)}
-          className="border-zinc-700 bg-zinc-900 text-white placeholder:text-zinc-500"
         />
         <Textarea
           placeholder={t.patient.addNotePlaceholder}
           value={noteText}
           onChange={(e) => setNoteText(e.target.value)}
-          className="min-h-24 border-zinc-700 bg-zinc-900 text-white placeholder:text-zinc-500"
+          className="min-h-24"
         />
       </div>
       <Button type="submit" disabled={isSubmitting || !noteText.trim()} className="w-full">

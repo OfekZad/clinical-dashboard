@@ -63,7 +63,7 @@ export function CachedDashboardClient({ serverPatients, serverPendingSurveys, lo
               <p className="font-mono text-2xl font-bold tracking-tight">{totalPatients}</p>
             </div>
             <div className="rounded-lg bg-primary/10 p-1.5">
-              <UsersIcon className="size-4 text-primary" />
+              <UsersIcon className="text-primary" />
             </div>
           </CardContent>
         </Card>
@@ -75,7 +75,7 @@ export function CachedDashboardClient({ serverPatients, serverPendingSurveys, lo
               <p className="font-mono text-2xl font-bold tracking-tight text-warning">{needsReview}</p>
             </div>
             <div className="rounded-lg bg-warning/10 p-1.5">
-              <AlertCircleIcon className="size-4 text-warning" />
+              <AlertCircleIcon className="text-warning" />
             </div>
           </CardContent>
         </Card>
@@ -87,7 +87,7 @@ export function CachedDashboardClient({ serverPatients, serverPendingSurveys, lo
               <p className="font-mono text-2xl font-bold tracking-tight text-destructive">{severeCases}</p>
             </div>
             <div className="rounded-lg bg-destructive/10 p-1.5">
-              <ActivityIcon className="size-4 text-destructive" />
+              <ActivityIcon className="text-destructive" />
             </div>
           </CardContent>
         </Card>
@@ -99,7 +99,7 @@ export function CachedDashboardClient({ serverPatients, serverPendingSurveys, lo
               <p className="font-mono text-2xl font-bold tracking-tight text-success">{improving}</p>
             </div>
             <div className="rounded-lg bg-success/10 p-1.5">
-              <CheckCircleIcon className="size-4 text-success" />
+              <CheckCircleIcon className="text-success" />
             </div>
           </CardContent>
         </Card>
@@ -107,7 +107,7 @@ export function CachedDashboardClient({ serverPatients, serverPendingSurveys, lo
 
       {/* Patients Table */}
       <Card className="border-border bg-card">
-        <CardHeader className="space-y-1 pb-4">
+        <CardHeader className="flex flex-col gap-1 pb-4">
           <CardTitle className="text-2xl">{t.dashboard.patientOverview}</CardTitle>
           <CardDescription>{t.dashboard.quickTriageView}</CardDescription>
         </CardHeader>

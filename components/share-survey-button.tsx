@@ -45,8 +45,8 @@ export function ShareSurveyButton({ patientId, patientName }: ShareSurveyButtonP
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 bg-transparent">
-          <Share2Icon className="size-4" />
+        <Button variant="outline" size="sm">
+          <Share2Icon data-icon="inline-start" />
           {t.survey.shareLink}
         </Button>
       </DialogTrigger>
@@ -62,7 +62,7 @@ export function ShareSurveyButton({ patientId, patientName }: ShareSurveyButtonP
         <div className="flex gap-2">
           <Input value={surveyUrl} readOnly dir="ltr" className="text-left font-mono text-sm" />
           <Button onClick={handleCopy} variant="outline" size="icon">
-            {copied ? <CheckIcon className="size-4 text-success" /> : <CopyIcon className="size-4" />}
+            {copied ? <CheckIcon className="text-success" /> : <CopyIcon />}
           </Button>
         </div>
         {copied && <p className="text-sm text-success">{t.survey.copiedLink}</p>}

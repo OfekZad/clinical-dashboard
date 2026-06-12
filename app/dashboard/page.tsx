@@ -132,16 +132,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-[1600px] space-y-8">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-8">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">
                 Hello Dr. Miller
             </h1>
             <p className="text-muted-foreground text-pretty">{t.dashboard.subtitle}</p>
           </div>
           <div className="flex items-center justify-center">
-            <p className="text-lg font-semibold text-foreground/80">{t.dashboard.title}</p>
+            <p className="text-lg font-semibold text-foreground/80 sm:block hidden">{t.dashboard.title}</p>
           </div>
           <div className="flex items-center gap-2">
             <JoyIndicator />

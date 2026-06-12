@@ -233,23 +233,23 @@ export default async function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-[1600px] space-y-8">
+      <div className="mx-auto flex max-w-[1600px] flex-col gap-8">
         {/* Header */}
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowLeftIcon className="size-4" />
+              <ArrowLeftIcon data-icon="inline-start" />
               {t.roi.backToDashboard}
             </Link>
             <h1 className="font-sans text-4xl font-bold tracking-tight text-balance">{t.roi.title}</h1>
             <p className="text-muted-foreground text-pretty">{t.roi.subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className="gap-1.5">
-              <CalendarIcon className="size-3" />
+            <Badge variant="outline">
+              <CalendarIcon />
               {t.roi.allTime}
             </Badge>
             {/* Language Toggle — hidden, English is default */}
@@ -259,10 +259,10 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Section 1: Time Savings */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary/10 p-2">
-              <ClockIcon className="size-5 text-primary" />
+              <ClockIcon className="text-primary" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">{t.roi.timeSavings.title}</h2>
@@ -279,7 +279,7 @@ export default async function AnalyticsPage() {
                     <p className="font-mono text-3xl font-bold">{metrics.timeSavings.totalAssessments}</p>
                   </div>
                   <div className="rounded-lg bg-chart-1/10 p-2">
-                    <ActivityIcon className="size-4 text-chart-1" />
+                    <ActivityIcon className="text-chart-1" />
                   </div>
                 </div>
               </CardContent>
@@ -293,7 +293,7 @@ export default async function AnalyticsPage() {
                     <p className="font-mono text-3xl font-bold text-success">{metrics.timeSavings.totalMinutesSaved}</p>
                   </div>
                   <div className="rounded-lg bg-success/10 p-2">
-                    <ZapIcon className="size-4 text-success" />
+                    <ZapIcon className="text-success" />
                   </div>
                 </div>
               </CardContent>
@@ -315,7 +315,7 @@ export default async function AnalyticsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-info/10 p-2">
-                    <ClockIcon className="size-4 text-info" />
+                    <ClockIcon className="text-info" />
                   </div>
                 </div>
               </CardContent>
@@ -332,7 +332,7 @@ export default async function AnalyticsPage() {
                     <p className="text-xs text-muted-foreground">{t.roi.timeSavings.perMonth}</p>
                   </div>
                   <div className="rounded-lg bg-success/10 p-2">
-                    <DollarSignIcon className="size-4 text-success" />
+                    <DollarSignIcon className="text-success" />
                   </div>
                 </div>
               </CardContent>
@@ -341,10 +341,10 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Section 2: Clinical Outcomes */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-chart-2/10 p-2">
-              <HeartPulseIcon className="size-5 text-chart-2" />
+              <HeartPulseIcon className="text-chart-2" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">{t.roi.clinicalOutcomes.title}</h2>
@@ -361,7 +361,7 @@ export default async function AnalyticsPage() {
                     <p className="font-mono text-3xl font-bold">{metrics.clinicalOutcomes.totalPatients}</p>
                   </div>
                   <div className="rounded-lg bg-primary/10 p-2">
-                    <UsersIcon className="size-4 text-primary" />
+                    <UsersIcon className="text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -370,7 +370,7 @@ export default async function AnalyticsPage() {
             <Card className="border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t.roi.clinicalOutcomes.improvingPatients}
                     </p>
@@ -379,7 +379,7 @@ export default async function AnalyticsPage() {
                     </p>
                   </div>
                   <div className="rounded-lg bg-success/10 p-2">
-                    <TrendingDownIcon className="size-4 text-success" />
+                    <TrendingDownIcon className="text-success" />
                   </div>
                 </div>
               </CardContent>
@@ -387,16 +387,16 @@ export default async function AnalyticsPage() {
 
             <Card className="border-border bg-card">
               <CardContent className="p-6">
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         {t.roi.clinicalOutcomes.improvementRate}
                       </p>
                       <p className="font-mono text-3xl font-bold">{metrics.clinicalOutcomes.improvementRate}%</p>
                     </div>
                     <div className="rounded-lg bg-chart-2/10 p-2">
-                      <TargetIcon className="size-4 text-chart-2" />
+                      <TargetIcon className="text-chart-2" />
                     </div>
                   </div>
                   <Progress value={metrics.clinicalOutcomes.improvementRate} className="h-2" />
@@ -407,7 +407,7 @@ export default async function AnalyticsPage() {
             <Card className="border-border bg-card">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
+                  <div className="flex flex-col gap-1">
                     <p className="text-sm font-medium text-muted-foreground">
                       {t.roi.clinicalOutcomes.avgScoreReduction}
                     </p>
@@ -419,7 +419,7 @@ export default async function AnalyticsPage() {
                     </div>
                   </div>
                   <div className="rounded-lg bg-success/10 p-2">
-                    <TrendingDownIcon className="size-4 text-success" />
+                    <TrendingDownIcon className="text-success" />
                   </div>
                 </div>
               </CardContent>
@@ -428,10 +428,10 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Section 3: Revenue Optimization */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-warning/10 p-2">
-              <DollarSignIcon className="size-5 text-warning" />
+              <DollarSignIcon className="text-warning" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">{t.roi.revenueOptimization.title}</h2>
@@ -451,7 +451,7 @@ export default async function AnalyticsPage() {
                     <p className="text-xs text-muted-foreground">{t.roi.revenueOptimization.patientsPerMonth}</p>
                   </div>
                   <div className="rounded-lg bg-primary/10 p-2">
-                    <UsersIcon className="size-4 text-primary" />
+                    <UsersIcon className="text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -470,7 +470,7 @@ export default async function AnalyticsPage() {
                       </p>
                     </div>
                     <div className="rounded-lg bg-info/10 p-2">
-                      <CheckCircleIcon className="size-4 text-info" />
+                      <CheckCircleIcon className="text-info" />
                     </div>
                   </div>
                   <Progress value={metrics.revenueOptimization.surveyCompletionRate} className="h-2" />
@@ -480,9 +480,9 @@ export default async function AnalyticsPage() {
 
             <Card className="border-border bg-card">
               <CardContent className="p-6">
-                <div className="space-y-3">
+                <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                    <div className="flex flex-col gap-1">
                       <p className="text-sm font-medium text-muted-foreground">
                         {t.roi.revenueOptimization.followUpCompliance}
                       </p>
@@ -491,7 +491,7 @@ export default async function AnalyticsPage() {
                       </p>
                     </div>
                     <div className="rounded-lg bg-chart-2/10 p-2">
-                      <ActivityIcon className="size-4 text-chart-2" />
+                      <ActivityIcon className="text-chart-2" />
                     </div>
                   </div>
                   <Progress value={metrics.revenueOptimization.followUpComplianceRate} className="h-2" />
@@ -512,7 +512,7 @@ export default async function AnalyticsPage() {
                     <p className="text-xs text-muted-foreground">{t.roi.revenueOptimization.monthly}</p>
                   </div>
                   <div className="rounded-lg bg-warning/10 p-2">
-                    <TrendingUpIcon className="size-4 text-warning" />
+                    <TrendingUpIcon className="text-warning" />
                   </div>
                 </div>
               </CardContent>
@@ -521,10 +521,10 @@ export default async function AnalyticsPage() {
         </div>
 
         {/* Section 4: Patient Engagement */}
-        <div className="space-y-4">
+        <div className="flex flex-col gap-4">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-info/10 p-2">
-              <SparklesIcon className="size-5 text-info" />
+              <SparklesIcon className="text-info" />
             </div>
             <div>
               <h2 className="text-xl font-semibold">{t.roi.patientEngagement.title}</h2>
@@ -541,7 +541,7 @@ export default async function AnalyticsPage() {
                     <p className="font-mono text-3xl font-bold">{metrics.patientEngagement.totalSurveysSent}</p>
                   </div>
                   <div className="rounded-lg bg-primary/10 p-2">
-                    <BarChart3Icon className="size-4 text-primary" />
+                    <BarChart3Icon className="text-primary" />
                   </div>
                 </div>
               </CardContent>
@@ -558,7 +558,7 @@ export default async function AnalyticsPage() {
                       <p className="font-mono text-3xl font-bold">{metrics.patientEngagement.completionRate}%</p>
                     </div>
                     <div className="rounded-lg bg-success/10 p-2">
-                      <CheckCircleIcon className="size-4 text-success" />
+                      <CheckCircleIcon className="text-success" />
                     </div>
                   </div>
                   <Progress value={metrics.patientEngagement.completionRate} className="h-2" />
@@ -579,7 +579,7 @@ export default async function AnalyticsPage() {
                     </div>
                   </div>
                   <div className="rounded-lg bg-info/10 p-2">
-                    <ClockIcon className="size-4 text-info" />
+                    <ClockIcon className="text-info" />
                   </div>
                 </div>
               </CardContent>
@@ -598,7 +598,7 @@ export default async function AnalyticsPage() {
                       </p>
                     </div>
                     <div className="rounded-lg bg-success/10 p-2">
-                      <UsersIcon className="size-4 text-success" />
+                      <UsersIcon className="text-success" />
                     </div>
                   </div>
                   <Progress value={metrics.patientEngagement.retentionRate} className="h-2" />
@@ -612,15 +612,15 @@ export default async function AnalyticsPage() {
         <Card className="border-border bg-card">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <BarChart3Icon className="size-5" />
+              <BarChart3Icon />
               {t.roi.monthlyTrends}
             </CardTitle>
             <CardDescription>{t.roi.assessmentsOverTime}</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="flex flex-col gap-4">
               {trends.map((trend, index) => (
-                <div key={index} className="space-y-2">
+                <div key={index} className="flex flex-col gap-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">{trend.month}</span>
                     <span className="text-muted-foreground">

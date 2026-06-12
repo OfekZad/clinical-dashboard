@@ -8,10 +8,10 @@ import type { AssessmentResponse, SurveyResponse } from "@/lib/types"
 import type { Locale, Strings, FrequencyKey } from "@/lib/i18n"
 
 function getScoreColor(score: number) {
-  if (score === 0) return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-800"
-  if (score <= 1) return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800"
-  if (score <= 2) return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800"
-  return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/50 dark:border-red-800"
+  if (score === 0) return "bg-success/10 text-success border-success/20"
+  if (score <= 1) return "bg-info/10 text-info border-info/20"
+  if (score <= 2) return "bg-warning/10 text-warning border-warning/20"
+  return "bg-destructive/10 text-destructive border-destructive/20"
 }
 
 function getScoreLabel(score: number, locale: Locale): string {
@@ -126,7 +126,7 @@ export function AssessmentSidebar({
       >
         <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
           <div className="flex items-center gap-2">
-            <ListChecksIcon className="size-4 text-muted-foreground" />
+            <ListChecksIcon className="text-muted-foreground" />
             <h2 className="text-sm font-semibold">
               {showAiResponses ? t.questionByQuestion : t.patientResponsesTitle}
             </h2>
@@ -135,18 +135,18 @@ export function AssessmentSidebar({
             onClick={closeSidebar}
             className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
           >
-            <XIcon className="size-4" />
+            <XIcon />
           </button>
         </div>
 
-        <div className="p-4 space-y-2">
+        <div className="flex flex-col gap-2 p-4">
           {showAiResponses && responses.map((r) => (
             <div key={r.id} className="rounded-lg border border-border bg-accent/20 p-3 transition-all hover:bg-accent/40">
               <div className="flex items-start gap-3">
                 <div className="shrink-0 flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary font-bold text-xs">
                   {r.question_number}
                 </div>
-                <div className="flex-1 min-w-0 space-y-1.5">
+                <div className="flex flex-1 min-w-0 flex-col gap-1.5">
                   <div className="flex items-center justify-between gap-2">
                     <h4 className="text-sm font-medium text-foreground">{r.question_text}</h4>
                     <Badge className={`shrink-0 text-[10px] px-2 py-0.5 ${getScoreColor(r.patient_response)}`}>
@@ -155,13 +155,13 @@ export function AssessmentSidebar({
                   </div>
                   {r.patient_quote && (
                     <div className="flex items-start gap-1.5 text-xs text-muted-foreground italic">
-                      <MessageSquareQuoteIcon className="size-3 mt-0.5 shrink-0 opacity-60" />
+                      <MessageSquareQuoteIcon className="mt-0.5 shrink-0 opacity-60" />
                       <span>&ldquo;{r.patient_quote}&rdquo;</span>
                     </div>
                   )}
                   {r.reasoning && (
                     <div className="flex items-start gap-1.5 text-[11px] text-muted-foreground/80">
-                      <BrainIcon className="size-3 mt-0.5 shrink-0 opacity-60" />
+                      <BrainIcon className="mt-0.5 shrink-0 opacity-60" />
                       <span>{r.reasoning}</span>
                     </div>
                   )}
@@ -178,7 +178,7 @@ export function AssessmentSidebar({
                   <div className="shrink-0 flex items-center justify-center size-8 rounded-full bg-primary/10 text-primary font-bold text-xs">
                     {sr.question_number}
                   </div>
-                  <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex flex-1 min-w-0 flex-col gap-1">
                     <div className="flex items-center justify-between gap-2">
                       <Badge variant="outline" className="text-[10px] px-2 py-0.5 font-normal">
                         {freqLabel ? freqLabel[locale] : sr.frequency}
@@ -191,7 +191,7 @@ export function AssessmentSidebar({
                     </div>
                     {sr.free_text && (
                       <div className="flex items-start gap-1.5 text-xs text-muted-foreground italic">
-                        <MessageSquareQuoteIcon className="size-3 mt-0.5 shrink-0 opacity-60" />
+                        <MessageSquareQuoteIcon className="mt-0.5 shrink-0 opacity-60" />
                         <span>&ldquo;{sr.free_text}&rdquo;</span>
                       </div>
                     )}

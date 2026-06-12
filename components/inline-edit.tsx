@@ -177,7 +177,7 @@ export function InlineNumber({ value, onSave, min = 0, max = 100, className, suf
       title="Click to edit"
     >
       {value !== null ? value : "—"}
-      {value !== null && suffix && <span className="text-xs text-muted-foreground ml-0.5">{suffix}</span>}
+      {value !== null && suffix && <span className="text-xs text-muted-foreground">{suffix}</span>}
     </span>
   )
 }
