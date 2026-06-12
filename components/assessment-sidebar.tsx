@@ -1,7 +1,5 @@
 "use client"
 
-import { useSearchParams, useRouter } from "next/navigation"
-import { useEffect, useCallback, useState, useRef } from "react"
 import { XIcon, MessageSquareQuoteIcon, BrainIcon, ListChecksIcon } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import type { AssessmentResponse, SurveyResponse } from "@/lib/types"
@@ -35,111 +33,42 @@ interface AssessmentSidebarProps {
   responses: AssessmentResponse[]
   surveyResponses: SurveyResponse[]
   assessmentType: "ai" | "survey"
-  id: string
   locale: Locale
   t: Pick<Strings["patient"], "questionByQuestion" | "patientResponsesTitle" | "assessments">
+  onClose: () => void
 }
+
 
 export function AssessmentSidebar({
   responses,
   surveyResponses,
   assessmentType,
-  id,
   locale,
   t,
+  onClose,
 }: AssessmentSidebarProps) {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const isOpen = searchParams.has("assessment")
-
-  const [visible, setVisible] = useState(false)
-  const [phase, setPhase] = useState<"idle" | "entering" | "open" | "exiting">("idle")
-  const prevOpenRef = useRef(false)
-
-  const closeSidebar = useCallback(() => {
-    if (phase === "exiting") return
-    const params = new URLSearchParams(searchParams.toString())
-    params.delete("assessment")
-    router.push(`/patient/${id}${params.toString() ? `?${params.toString()}` : ""}`, { scroll: false })
-  }, [searchParams, router, id, phase])
-
-  // Handle open/close transitions
-  useEffect(() => {
-    const prev = prevOpenRef.current
-    prevOpenRef.current = isOpen
-
-    if (isOpen && !prev) {
-      // Opening: first render, then animate in
-      setPhase("entering")
-      setVisible(true)
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setPhase("open")
-        })
-      })
-    } else if (!isOpen && prev) {
-      // Closing: animate out, then remove
-      setPhase("exiting")
-      const timer = setTimeout(() => {
-        setVisible(false)
-        setPhase("idle")
-      }, 300)
-      return () => clearTimeout(timer)
-    }
-  }, [isOpen])
-
-  // Close on Escape key
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && phase === "open") closeSidebar()
-    }
-    if (isOpen) window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
-  }, [isOpen, closeSidebar, phase])
-
-  if (!visible) return null
-
   const showAiResponses = assessmentType === "ai" && responses.length > 0
   const showSurveyResponses = assessmentType === "survey" && surveyResponses.length > 0
 
-  const isEntering = phase === "entering"
-  const isExiting = phase === "exiting"
-  const transitioning = isEntering || isExiting
-
   return (
-    <>
-      {/* Backdrop overlay with animated blur */}
-      <div
-        className={`fixed inset-0 z-30 transition-all duration-300 ease-in-out ${
-          transitioning
-            ? "bg-black/0 backdrop-blur-none"
-            : "bg-black/20 backdrop-blur-sm"
-        }`}
-        onClick={closeSidebar}
-      />
-
-      {/* Sidebar panel with slide animation */}
-      <div
-        className={`fixed right-0 top-0 h-full w-full max-w-lg z-40 bg-background shadow-2xl border-l border-border overflow-y-auto transition-transform duration-300 ease-in-out ${
-          transitioning ? "translate-x-full" : "translate-x-0"
-        }`}
-      >
-        <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
-          <div className="flex items-center gap-2">
-            <ListChecksIcon className="text-muted-foreground" />
-            <h2 className="text-sm font-semibold">
-              {showAiResponses ? t.questionByQuestion : t.patientResponsesTitle}
-            </h2>
-          </div>
-          <button
-            onClick={closeSidebar}
-            className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          >
-            <XIcon />
-          </button>
+    <div className="flex flex-col h-full overflow-hidden">
+      <div className="sticky top-0 z-10 flex items-center justify-between bg-background/95 backdrop-blur-sm border-b border-border px-4 py-3">
+        <div className="flex items-center gap-2">
+          <ListChecksIcon className="text-muted-foreground" />
+          <h2 className="text-sm font-semibold">
+            {showAiResponses ? t.questionByQuestion : t.patientResponsesTitle}
+          </h2>
         </div>
+        <button
+          onClick={onClose}
+          className="rounded-full p-1.5 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+        >
+          <XIcon />
+        </button>
+      </div>
 
-        <div className="flex flex-col gap-2 p-4">
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex flex-col gap-2">
           {showAiResponses && responses.map((r) => (
             <div key={r.id} className="rounded-lg border border-border bg-accent/20 p-3 transition-all hover:bg-accent/40">
               <div className="flex items-start gap-3">
@@ -202,6 +131,6 @@ export function AssessmentSidebar({
           })}
         </div>
       </div>
-    </>
+    </div>
   )
 }

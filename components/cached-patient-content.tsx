@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useCallback, useState, useEffect } from "react"
 import { useDataCache, useCachedPatient, useCachedAssessments, useCachedMedications } from "@/lib/cache"
 import type { AssessmentResponse, ClinicianNote, SurveyResponse, AssessmentWithType, PatientMedication } from "@/lib/types"
 import { CacheLoadingState } from "./cache-loading"
@@ -11,7 +11,7 @@ import {
   ArrowLeftIcon, MonitorIcon, MoonIcon, WindIcon, DropletIcon,
   TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronRightIcon,
   ActivityIcon, PillIcon, StethoscopeIcon, MessageSquareQuoteIcon,
-  BrainIcon, ListChecksIcon,
+  ListChecksIcon,
 } from "lucide-react"
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -70,7 +70,6 @@ function getTrendIndicator(currentScore: number, previousScore: number | null) {
 }
 
 function ScoreTrendChart({ items, locale, t }: { items: AssessmentWithType[]; locale: Locale; t: { scoreTrend: string } }) {
-  // Sort chronologically (oldest first) for the line chart
   const chartData = useMemo(() => {
     return [...items]
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
@@ -160,7 +159,6 @@ export function CachedPatientContent({ patientId }: Props) {
   const { t, locale } = useLocale()
   const { cache, loading } = useDataCache()
 
-  // Read everything from cache using memoized selectors
   const patient = useCachedPatient(patientId)
   const medications = useCachedMedications(patientId)
 
@@ -188,7 +186,6 @@ export function CachedPatientContent({ patientId }: Props) {
     return allItems[0]
   }, [allItems, assessmentId])
 
-  // Get responses/notes from cache for the selected assessment
   const responses = useMemo(() => {
     if (!selectedAssessment || selectedAssessment.type !== "ai") return []
     return Object.values(cache.assessment_responses)
@@ -209,6 +206,64 @@ export function CachedPatientContent({ patientId }: Props) {
       .filter((n) => n.assessment_id === selectedAssessment.id)
       .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
   }, [cache.clinician_notes, selectedAssessment])
+
+  // All hooks must be before early returns
+  const [callTranscript, setCallTranscript] = useState<string | null>(null)
+  const [callInfo, setCallInfo] = useState<{ call_number: number; called_at: string; duration_seconds: number | null } | null>(null)
+  const [transcriptLoading, setTranscriptLoading] = useState(false)
+
+  const asmt = selectedAssessment
+  const isDetailView = assessmentId != null
+
+  useEffect(() => {
+    if (!isDetailView || !asmt || asmt.type !== "ai" || !patient) {
+      setCallTranscript(null)
+      setCallInfo(null)
+      return
+    }
+    let cancelled = false
+    setTranscriptLoading(true)
+    fetch(`/api/calls/transcript?patient_id=${patient.id}`)
+      .then((res) => {
+        if (!res.ok) {
+          if (res.status === 404) return null
+          throw new Error("Failed to fetch transcript")
+        }
+        return res.json()
+      })
+      .then((data) => {
+        if (cancelled) return
+        if (data && data.transcript) {
+          setCallTranscript(data.transcript)
+          setCallInfo({
+            call_number: data.call_number,
+            called_at: data.called_at,
+            duration_seconds: data.duration_seconds,
+          })
+        } else {
+          setCallTranscript(null)
+          setCallInfo(null)
+        }
+      })
+      .catch((err) => {
+        console.error("[Transcript] Error:", err)
+        if (!cancelled) {
+          setCallTranscript(null)
+          setCallInfo(null)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setTranscriptLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [isDetailView, asmt, patient])
+
+  const handleCloseDetail = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete("assessment")
+    window.history.pushState(null, "", `/patient/${patientId}${params.toString() ? `?${params.toString()}` : ""}`)
+    window.dispatchEvent(new Event("popstate"))
+  }, [searchParams, patientId])
 
   // Show loading state while cache initializes
   if (loading && !patient) {
@@ -248,8 +303,7 @@ export function CachedPatientContent({ patientId }: Props) {
 
   return (
     <div className="min-h-screen bg-background p-3 md:p-6">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4">
-        {/* Header */}
+      <div className={`mx-auto flex flex-col gap-4 ${isDetailView ? "max-w-full" : "max-w-7xl"}`}>
         <div className="flex items-center justify-between">
           <Link href="/dashboard">
             <Button variant="ghost" size="sm">
@@ -263,7 +317,6 @@ export function CachedPatientContent({ patientId }: Props) {
           </div>
         </div>
 
-        {/* Patient Info Header */}
         <PatientInfoClient
           patient={patient}
           assessment={assessment}
@@ -285,171 +338,295 @@ export function CachedPatientContent({ patientId }: Props) {
 
         {assessment ? (
           <>
-            <div className="grid gap-4 lg:grid-cols-2">
-              {/* Left Column: Assessment History */}
-              <div className="flex flex-col gap-4 relative z-50">
-                <Card className="border-border bg-card shadow-sm">
-                  <CardHeader className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <TrendingDownIcon className="text-muted-foreground" />
-                      <CardTitle className="text-sm font-semibold">{t.patient.assessmentHistory}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
-                    {allItems.slice(0, 8).map((hist, index) => {
-                      const prevHist = allItems[index + 1] || null
-                      const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score) : null
-                      const isSelected = assessment?.id === hist.id
-                      return (
-                        <Link key={hist.id} href={`/patient/${patientId}?assessment=${hist.id}`} className="block">
-                          <div className={`rounded-lg border px-3 py-2 transition-all cursor-pointer ${isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-border bg-accent/20 hover:bg-accent/40"}`}>
-                            <div className="flex items-center justify-between gap-2">
-                              <div className="flex items-center gap-2 min-w-0">
-                                <div className="text-base font-bold text-foreground shrink-0">{hist.total_score}</div>
-                                <Badge className={`text-[10px] px-1.5 py-0 ${getSeverityColor(hist.severity_level)}`}>
-                                  {getSeverityLabel(hist.severity_level, locale)}
-                                </Badge>
-                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
-                                  {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
-                                </Badge>
-                                {histTrend && (
-                                  <div className={`flex items-center gap-0.5 ${histTrend.color}`}>
-                                    <histTrend.icon />
-                                  </div>
-                                )}
-                              </div>
-                              <ChevronRightIcon className="text-muted-foreground" />
-                            </div>
-                            <div className="flex items-center justify-between mt-0.5">
-                              <span className="text-[10px] text-muted-foreground">
-                                {new Date(hist.date).toLocaleDateString(localeTag[locale], { month: "short", day: "numeric", year: "numeric" })}
-                              </span>
-                              <div className="flex gap-1">
-                                {hist.has_screen_intolerance && <MonitorIcon className="text-warning" />}
-                                {hist.has_night_driving_issues && <MoonIcon className="text-info" />}
-                                {hist.has_wind_sensitivity && <WindIcon className="text-primary" />}
-                                {hist.has_low_humidity_issues && <DropletIcon className="text-chart-2" />}
-                              </div>
-                            </div>
-                          </div>
-                        </Link>
-                      )
-                    })}
-                    {allItems.length > 8 && (
-                      <p className="text-[10px] text-center text-muted-foreground">+{allItems.length - 8} more</p>
-                    )}
-                    <ScoreTrendChart items={allItems} locale={locale} t={{ scoreTrend: t.patient.scoreTrend }} />
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Right Column: Flags + Meds */}
-              <div className="flex flex-col gap-4">
-                <Card className="border-border bg-card shadow-sm">
-                  <CardHeader className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <ActivityIcon className="text-muted-foreground" />
-                      <CardTitle className="text-xs font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-3 pt-0">
-                    <div className="flex flex-wrap gap-1.5">
-                      {[
-                        { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort },
-                        { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort },
-                        { flag: assessment.has_wind_sensitivity, icon: WindIcon, label: t.patient.flagWindShort },
-                        { flag: assessment.has_low_humidity_issues, icon: DropletIcon, label: t.patient.flagHumidityShort },
-                      ].map(({ flag, icon: Icon, label }) => (
-                        <div key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${flag ? "border-primary/20 bg-primary/5" : "border-border bg-accent/20 opacity-50"}`}>
-                          <Icon className={flag ? "text-primary" : "text-muted-foreground"} />
-                          <span className={`text-[10px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>{flag ? label : `No ${label}`}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border bg-card shadow-sm">
-                  <CardHeader className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <PillIcon className="text-muted-foreground" />
-                      <CardTitle className="text-sm font-semibold">{t.patient.medications}</CardTitle>
-                      {medications.length > 0 && (
-                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{medications.length}</Badge>
-                      )}
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
-                    {medications.length === 0 ? (
-                      <p className="text-xs text-center text-muted-foreground">{t.patient.noMedications}</p>
-                    ) : (
-                      medications.map((med) => {
-                        const ms = medStatusStyle(med.status)
-                        const stopped = med.status === "stopped"
+            {isDetailView ? (
+              <div className="flex gap-4 h-[calc(100vh-220px)] min-h-0">
+                {/* Column 1: Assessment History */}
+                <div className="flex-1 min-w-0 overflow-y-auto">
+                  <Card className="border-border bg-card shadow-sm h-full">
+                    <CardHeader className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <TrendingDownIcon className="text-muted-foreground" />
+                        <CardTitle className="text-sm font-semibold">{t.patient.assessmentHistory}</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
+                      {allItems.slice(0, 20).map((hist, index) => {
+                        const prevHist = allItems[index + 1] || null
+                        const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score) : null
+                        const isSelected = assessment?.id === hist.id
                         return (
-                          <div key={med.id} className={`flex flex-col gap-1 rounded-lg border p-3 transition-all ${stopped ? ms : `${ms} hover:opacity-90`}`}>
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="flex-1 min-w-0">
-                                <h4 className={`text-xs font-semibold ${stopped ? "opacity-60" : ""}`}>{med.medication_name}</h4>
-                                <div className={`text-[10px] ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
-                                  {med.dosage && <span>{med.dosage}{med.frequency ? `, ${med.frequency}` : ""}</span>}
+                          <Link key={hist.id} href={`/patient/${patientId}?assessment=${hist.id}`} className="block">
+                            <div className={`rounded-lg border px-3 py-2 transition-all cursor-pointer ${isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-border bg-accent/20 hover:bg-accent/40"}`}>
+                              <div className="flex items-center justify-between gap-2">
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <div className="text-base font-bold text-foreground shrink-0">{hist.total_score}</div>
+                                  <Badge className={`text-[10px] px-1.5 py-0 ${getSeverityColor(hist.severity_level)}`}>
+                                    {getSeverityLabel(hist.severity_level, locale)}
+                                  </Badge>
+                                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                    {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
+                                  </Badge>
+                                  {histTrend && (
+                                    <div className={`flex items-center gap-0.5 ${histTrend.color}`}>
+                                      <histTrend.icon />
+                                    </div>
+                                  )}
                                 </div>
-                                {med.start_date && !stopped && (
-                                  <div className="text-[10px] text-muted-foreground">{t.patient.startDate}: {new Date(med.start_date).toLocaleDateString(localeTag[locale])}</div>
-                                )}
-                                {med.stop_date && stopped && (
-                                  <div className="text-[10px] text-muted-foreground">{t.patient.stopDate}: {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}</div>
-                                )}
-                                {med.notes && <p className={`text-[10px] mt-1 ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>{med.notes}</p>}
+                                <ChevronRightIcon className="text-muted-foreground" />
                               </div>
-                              <Badge className={`shrink-0 text-[9px] px-1.5 py-0 ${stopped ? "border-muted-foreground/30 text-muted-foreground bg-transparent" : med.status === "new" ? "bg-warning/10 text-warning border-0" : "bg-success/10 text-success border-0"}`}>
-                                {medStatusLabel(med.status)}
-                              </Badge>
+                              <div className="flex items-center justify-between mt-0.5">
+                                <span className="text-[10px] text-muted-foreground">
+                                  {new Date(hist.date).toLocaleDateString(localeTag[locale], { month: "short", day: "numeric", year: "numeric" })}
+                                </span>
+                                <div className="flex gap-1">
+                                  {hist.has_screen_intolerance && <MonitorIcon className="text-warning" />}
+                                  {hist.has_night_driving_issues && <MoonIcon className="text-info" />}
+                                  {hist.has_wind_sensitivity && <WindIcon className="text-primary" />}
+                                  {hist.has_low_humidity_issues && <DropletIcon className="text-chart-2" />}
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          </Link>
                         )
-                      })
+                      })}
+                      {allItems.length > 20 && (
+                        <p className="text-[10px] text-center text-muted-foreground">+{allItems.length - 20} more</p>
+                      )}
+                      <ScoreTrendChart items={allItems} locale={locale} t={{ scoreTrend: t.patient.scoreTrend }} />
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Column 2: Transcript */}
+                <div className="flex-1 min-w-0 overflow-y-auto">
+                  <Card className="border-border bg-card shadow-sm h-full flex flex-col">
+                    <CardHeader className="px-4 py-3 border-b border-border">
+                      <div className="flex items-center gap-2">
+                        <MessageSquareQuoteIcon className="text-muted-foreground" />
+                        <CardTitle className="text-sm font-semibold">Call Transcript</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 overflow-y-auto p-4">
+                      {assessment.type === "ai" && callTranscript ? (
+                        <div className="flex flex-col gap-2">
+                          {callInfo && (
+                            <div className="flex items-center gap-2 text-[10px] text-muted-foreground mb-2 pb-2 border-b border-border">
+                              <span>Call #{callInfo.call_number}</span>
+                              <span>&bull;</span>
+                              <span>{new Date(callInfo.called_at).toLocaleString()}</span>
+                              {callInfo.duration_seconds && (
+                                <>
+                                  <span>&bull;</span>
+                                  <span>{Math.floor(callInfo.duration_seconds / 60)}m {callInfo.duration_seconds % 60}s</span>
+                                </>
+                              )}
+                            </div>
+                          )}
+                          <div className="text-sm whitespace-pre-wrap font-mono text-foreground/90 leading-relaxed">
+                            {callTranscript}
+                          </div>
+                        </div>
+                      ) : assessment.type === "ai" && transcriptLoading ? (
+                        <div className="flex items-center justify-center py-8">
+                          <div className="size-5 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+                        </div>
+                      ) : assessment.type === "survey" ? (
+                        <div className="flex flex-col gap-3">
+                          {surveyResponses.map((sr) => {
+                            const freqLabel = frequencyLabels[sr.frequency as FrequencyKey]
+                            return (
+                              <div key={sr.id} className="flex justify-start">
+                                <div className="max-w-[85%] rounded-lg px-3 py-2 bg-primary/10 text-foreground border border-primary/20">
+                                  <p className="text-sm font-medium">Question {sr.question_number}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    Frequency: {freqLabel ? freqLabel[locale] : sr.frequency}
+                                  </p>
+                                  {sr.free_text && (
+                                    <p className="text-xs text-muted-foreground mt-1 italic">&ldquo;{sr.free_text}&rdquo;</p>
+                                  )}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-center text-muted-foreground py-8">No transcript data available</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Column 3: Question-by-Question Breakdown */}
+                <div className="flex-1 min-w-0 overflow-y-auto">
+                  <Card className="border-border bg-card shadow-sm h-full flex flex-col">
+                    <AssessmentSidebar
+                      responses={responses}
+                      surveyResponses={surveyResponses}
+                      assessmentType={assessment.type}
+                      locale={locale}
+                      t={{
+                        questionByQuestion: t.patient.questionByQuestion,
+                        patientResponsesTitle: t.patient.patientResponsesTitle,
+                        assessments: t.patient.assessments,
+                      }}
+                      onClose={handleCloseDetail}
+                    />
+                  </Card>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="flex flex-col gap-4 relative z-50">
+                    <Card className="border-border bg-card shadow-sm">
+                      <CardHeader className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <TrendingDownIcon className="text-muted-foreground" />
+                          <CardTitle className="text-sm font-semibold">{t.patient.assessmentHistory}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
+                        {allItems.slice(0, 8).map((hist, index) => {
+                          const prevHist = allItems[index + 1] || null
+                          const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score) : null
+                          const isSelected = assessment?.id === hist.id
+                          return (
+                            <Link key={hist.id} href={`/patient/${patientId}?assessment=${hist.id}`} className="block">
+                              <div className={`rounded-lg border px-3 py-2 transition-all cursor-pointer ${isSelected ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-border bg-accent/20 hover:bg-accent/40"}`}>
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div className="text-base font-bold text-foreground shrink-0">{hist.total_score}</div>
+                                    <Badge className={`text-[10px] px-1.5 py-0 ${getSeverityColor(hist.severity_level)}`}>
+                                      {getSeverityLabel(hist.severity_level, locale)}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-[9px] px-1.5 py-0">
+                                      {hist.type === "ai" ? t.patient.aiAssessment : t.patient.selfSurvey}
+                                    </Badge>
+                                    {histTrend && (
+                                      <div className={`flex items-center gap-0.5 ${histTrend.color}`}>
+                                        <histTrend.icon />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <ChevronRightIcon className="text-muted-foreground" />
+                                </div>
+                                <div className="flex items-center justify-between mt-0.5">
+                                  <span className="text-[10px] text-muted-foreground">
+                                    {new Date(hist.date).toLocaleDateString(localeTag[locale], { month: "short", day: "numeric", year: "numeric" })}
+                                  </span>
+                                  <div className="flex gap-1">
+                                    {hist.has_screen_intolerance && <MonitorIcon className="text-warning" />}
+                                    {hist.has_night_driving_issues && <MoonIcon className="text-info" />}
+                                    {hist.has_wind_sensitivity && <WindIcon className="text-primary" />}
+                                    {hist.has_low_humidity_issues && <DropletIcon className="text-chart-2" />}
+                                  </div>
+                                </div>
+                              </div>
+                            </Link>
+                          )
+                        })}
+                        {allItems.length > 8 && (
+                          <p className="text-[10px] text-center text-muted-foreground">+{allItems.length - 8} more</p>
+                        )}
+                        <ScoreTrendChart items={allItems} locale={locale} t={{ scoreTrend: t.patient.scoreTrend }} />
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  <div className="flex flex-col gap-4">
+                    <Card className="border-border bg-card shadow-sm">
+                      <CardHeader className="px-4 py-2.5">
+                        <div className="flex items-center gap-2">
+                          <ActivityIcon className="text-muted-foreground" />
+                          <CardTitle className="text-xs font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="px-4 pb-3 pt-0">
+                        <div className="flex flex-wrap gap-1.5">
+                          {[
+                            { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort },
+                            { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort },
+                            { flag: assessment.has_wind_sensitivity, icon: WindIcon, label: t.patient.flagWindShort },
+                            { flag: assessment.has_low_humidity_issues, icon: DropletIcon, label: t.patient.flagHumidityShort },
+                          ].map(({ flag, icon: Icon, label }) => (
+                            <div key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${flag ? "border-primary/20 bg-primary/5" : "border-border bg-accent/20 opacity-50"}`}>
+                              <Icon className={flag ? "text-primary" : "text-muted-foreground"} />
+                              <span className={`text-[10px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>{flag ? label : `No ${label}`}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="border-border bg-card shadow-sm">
+                      <CardHeader className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <PillIcon className="text-muted-foreground" />
+                          <CardTitle className="text-sm font-semibold">{t.patient.medications}</CardTitle>
+                          {medications.length > 0 && (
+                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{medications.length}</Badge>
+                          )}
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
+                        {medications.length === 0 ? (
+                          <p className="text-xs text-center text-muted-foreground">{t.patient.noMedications}</p>
+                        ) : (
+                          medications.map((med) => {
+                            const ms = medStatusStyle(med.status)
+                            const stopped = med.status === "stopped"
+                            return (
+                              <div key={med.id} className={`flex flex-col gap-1 rounded-lg border p-3 transition-all ${stopped ? ms : `${ms} hover:opacity-90`}`}>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className={`text-xs font-semibold ${stopped ? "opacity-60" : ""}`}>{med.medication_name}</h4>
+                                    <div className={`text-[10px] ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>
+                                      {med.dosage && <span>{med.dosage}{med.frequency ? `, ${med.frequency}` : ""}</span>}
+                                    </div>
+                                    {med.start_date && !stopped && (
+                                      <div className="text-[10px] text-muted-foreground">{t.patient.startDate}: {new Date(med.start_date).toLocaleDateString(localeTag[locale])}</div>
+                                    )}
+                                    {med.stop_date && stopped && (
+                                      <div className="text-[10px] text-muted-foreground">{t.patient.stopDate}: {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}</div>
+                                    )}
+                                    {med.notes && <p className={`text-[10px] mt-1 ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>{med.notes}</p>}
+                                  </div>
+                                  <Badge className={`shrink-0 text-[9px] px-1.5 py-0 ${stopped ? "border-muted-foreground/30 text-muted-foreground bg-transparent" : med.status === "new" ? "bg-warning/10 text-warning border-0" : "bg-success/10 text-success border-0"}`}>
+                                    {medStatusLabel(med.status)}
+                                  </Badge>
+                                </div>
+                              </div>
+                            )
+                          })
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
+
+                <Card className="border-border bg-card shadow-sm">
+                  <CardHeader className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <StethoscopeIcon className="text-muted-foreground" />
+                      <CardTitle className="text-sm font-semibold">{t.patient.clinicianNotes}</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
+                    {notes.length > 0 ? (
+                      notes.map((note) => (
+                        <div key={note.id} className="rounded-lg border border-border bg-accent/30 p-3 transition-all hover:bg-accent/50">
+                          <div className="mb-1 text-xs text-foreground">{note.note_text}</div>
+                          <div className="text-[10px] text-muted-foreground">{note.created_by} &bull; {new Date(note.created_at).toLocaleString()}</div>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-xs text-muted-foreground">{t.patient.noNotesYet}</p>
                     )}
+                    <AddNoteForm assessmentId={assessment.id} />
                   </CardContent>
                 </Card>
-              </div>
-            </div>
-
-            {/* Clinician Notes */}
-            <Card className="border-border bg-card shadow-sm">
-              <CardHeader className="px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <StethoscopeIcon className="text-muted-foreground" />
-                  <CardTitle className="text-sm font-semibold">{t.patient.clinicianNotes}</CardTitle>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
-                {notes.length > 0 ? (
-                  notes.map((note) => (
-                    <div key={note.id} className="rounded-lg border border-border bg-accent/30 p-3 transition-all hover:bg-accent/50">
-                      <div className="mb-1 text-xs text-foreground">{note.note_text}</div>
-                      <div className="text-[10px] text-muted-foreground">{note.created_by} &bull; {new Date(note.created_at).toLocaleString()}</div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-xs text-muted-foreground">{t.patient.noNotesYet}</p>
-                )}
-                <AddNoteForm assessmentId={assessment.id} />
-              </CardContent>
-            </Card>
-
-            <AssessmentSidebar
-              responses={responses}
-              surveyResponses={surveyResponses}
-              assessmentType={assessment.type}
-              id={patientId}
-              locale={locale}
-              t={{
-                questionByQuestion: t.patient.questionByQuestion,
-                patientResponsesTitle: t.patient.patientResponsesTitle,
-                assessments: t.patient.assessments,
-              }}
-            />
+              </>
+            )}
           </>
         ) : (
           <div className="py-12 text-center text-muted-foreground">{t.patient.noAssessments}</div>
