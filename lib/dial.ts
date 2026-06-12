@@ -59,7 +59,8 @@ export async function waitForEvent(timeoutMs = 8000): Promise<DialEvent | null> 
       Authorization: `Bearer ${getApiKey()}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ type: "inbound_message", timeout: timeoutMs }),
+    // timeout is in seconds (max 60); eventType is the correct field name
+    body: JSON.stringify({ eventType: "inbound_message", timeout: Math.min(Math.floor(timeoutMs / 1000), 60) }),
   })
 
   if (res.status === 204 || res.status === 408) return null
