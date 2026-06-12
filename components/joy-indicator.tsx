@@ -124,7 +124,7 @@ export function JoyIndicator() {
           "hover:scale-105 active:scale-95 cursor-pointer",
           config.borderClass,
           config.textClass,
-          "bg-white/90 dark:bg-gray-900/90",
+          "bg-background/90",
           "shadow-sm hover:shadow-md",
         )}
         aria-label={`Joy AI Agent — ${config.label}. Click to view stats.`}

@@ -58,25 +58,25 @@ export function JoyStatsDialog({
       label: "Calls Taken Today",
       value: String(stats.callsToday),
       icon: "📞",
-      colorClass: "bg-amber-50 border-amber-200 dark:bg-amber-950/30 dark:border-amber-800",
+      colorClass: "bg-warning/10 border-warning/20",
     },
     {
       label: "OSDI Reports Completed",
       value: String(stats.osdiReportsToday),
       icon: "📋",
-      colorClass: "bg-blue-50 border-blue-200 dark:bg-blue-950/30 dark:border-blue-800",
+      colorClass: "bg-info/10 border-info/20",
     },
     {
       label: "Escalations Today",
       value: String(stats.escalationsToday),
       icon: "🚨",
-      colorClass: "bg-red-50 border-red-200 dark:bg-red-950/30 dark:border-red-800",
+      colorClass: "bg-destructive/10 border-destructive/20",
     },
     {
       label: "Total Call Time",
       value: formatTime(stats.totalCallTimeMinutes),
       icon: "⏱️",
-      colorClass: "bg-purple-50 border-purple-200 dark:bg-purple-950/30 dark:border-purple-800",
+      colorClass: "bg-chart-1/10 border-chart-1/20",
     },
   ]
 
@@ -106,7 +106,7 @@ export function JoyStatsDialog({
               "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium transition-all duration-500",
               stateConfig.borderClass,
               stateConfig.textClass,
-              "bg-white/80 dark:bg-gray-800/80",
+              "bg-background/80",
             )}
           >
             <span

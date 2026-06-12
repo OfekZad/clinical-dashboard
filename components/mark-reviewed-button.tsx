@@ -27,7 +27,7 @@ export function MarkReviewedButton({ assessmentId }: { assessmentId: string }) {
 
   return (
     <Button onClick={handleMarkReviewed} disabled={isLoading}>
-      <CheckCircleIcon />
+      <CheckCircleIcon data-icon="inline-start" />
       {isLoading ? t.patient.marking : t.patient.markAsReviewed}
     </Button>
   )

@@ -63,14 +63,14 @@ export default async function SurveysPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-[1200px] space-y-8">
+      <div className="mx-auto flex max-w-[1200px] flex-col gap-8">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              <ArrowRightIcon className="size-4" />
+              <ArrowRightIcon data-icon="inline-start" />
               {t.patient.backToDashboard}
             </Link>
             <h1 className="font-sans text-3xl font-bold tracking-tight">{t.survey.surveysPageTitle}</h1>
@@ -83,8 +83,8 @@ export default async function SurveysPage() {
         </div>
 
         <Card>
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <ClipboardListIcon className="size-12 text-muted-foreground mb-4" />
+          <CardContent className="flex flex-col items-center justify-center gap-4 py-12">
+            <ClipboardListIcon className="size-12 text-muted-foreground" />
             <p className="text-muted-foreground text-center">{t.survey.autoScoredInfo}</p>
             <Link href="/dashboard" className="mt-4 text-sm text-primary hover:underline">
               {t.patient.backToDashboard}

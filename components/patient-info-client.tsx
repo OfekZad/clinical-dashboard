@@ -9,15 +9,15 @@ import { getSeverityLabel, type Locale } from "@/lib/i18n"
 function getSeverityColor(severity: string) {
   switch (severity) {
     case "Normal":
-      return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-800"
+      return "bg-success/10 text-success border-success/20"
     case "Mild":
-      return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800"
+      return "bg-info/10 text-info border-info/20"
     case "Moderate":
-      return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800"
+      return "bg-warning/10 text-warning border-warning/20"
     case "Severe":
-      return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/50 dark:border-red-800"
+      return "bg-destructive/10 text-destructive border-destructive/20"
     default:
-      return "text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-950/50 dark:border-gray-800"
+      return "bg-muted text-muted-foreground border-border"
   }
 }
 
@@ -62,9 +62,9 @@ export function PatientInfoClient({
   const trend = assessment && previousScore !== null
     ? (() => {
         const diff = assessment.total_score - previousScore
-        if (diff > 5) return { icon: TrendingUpIcon, label: t.worsening, color: "text-red-600 dark:text-red-400" }
-        if (diff < -5) return { icon: TrendingDownIcon, label: t.improving, color: "text-emerald-600 dark:text-emerald-400" }
-        return { icon: MinusIcon, label: t.stable, color: "text-gray-600 dark:text-gray-400" }
+        if (diff > 5) return { icon: TrendingUpIcon, label: t.worsening, color: "text-destructive" }
+        if (diff < -5) return { icon: TrendingDownIcon, label: t.improving, color: "text-success" }
+        return { icon: MinusIcon, label: t.stable, color: "text-muted-foreground" }
       })()
     : null
 
@@ -159,7 +159,7 @@ export function PatientInfoClient({
               />
               {trend && (
                 <div className={`flex items-center gap-0.5 ${trend.color}`}>
-                  <trend.icon className="size-4" />
+                  <trend.icon className="text-current" />
                   <span className="text-[10px] font-medium">{trend.label}</span>
                 </div>
               )}
@@ -197,7 +197,7 @@ export function PatientInfoClient({
 
           {/* Last Visit */}
           <div className="flex items-center gap-3 rounded-xl border border-border bg-accent/30 px-4 py-3 shadow-sm">
-            <CalendarIcon className="size-4 text-muted-foreground" />
+            <CalendarIcon className="text-muted-foreground" />
             <div>
               <div className="text-xs font-semibold text-foreground">
                 <InlineDate

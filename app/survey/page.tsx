@@ -113,7 +113,7 @@ export default function SurveyPage() {
           <Card className="border-success/20 bg-success/5">
             <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
               <div className="rounded-full bg-success/10 p-4">
-                <CheckCircleIcon className="size-12 text-success" />
+                <CheckCircleIcon className="text-success" />
               </div>
               <h2 className="text-2xl font-bold text-success">{t.survey.successTitle}</h2>
               <p className="text-muted-foreground">{t.survey.successMessage}</p>
@@ -126,12 +126,12 @@ export default function SurveyPage() {
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-2">
-                <EyeIcon className="size-6 text-primary" />
+                <EyeIcon className="text-primary" />
               </div>
               <h1 className="font-sans text-3xl font-bold tracking-tight">{t.survey.title}</h1>
             </div>
@@ -150,14 +150,14 @@ export default function SurveyPage() {
           </CardHeader>
         </Card>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           {/* Patient Info */}
           <Card>
             <CardHeader>
               <CardTitle>{t.survey.patientInfo}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
                 <Label htmlFor="name">
                   {t.survey.name} <span className="text-destructive">*</span>
                 </Label>
@@ -171,7 +171,7 @@ export default function SurveyPage() {
                 />
               </div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="email">{t.survey.email}</Label>
                   <Input
                     id="email"
@@ -183,7 +183,7 @@ export default function SurveyPage() {
                     className="text-left"
                   />
                 </div>
-                <div className="space-y-2">
+                <div className="flex flex-col gap-2">
                   <Label htmlFor="phone">{t.survey.phone}</Label>
                   <Input
                     id="phone"
@@ -204,9 +204,9 @@ export default function SurveyPage() {
             <CardHeader>
               <CardTitle>{t.survey.questionsSection}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent className="flex flex-col gap-8">
               {questions.map((question) => (
-                <div key={question.number} className="space-y-4 border-b border-border pb-6 last:border-0 last:pb-0">
+                <div key={question.number} className="flex flex-col gap-4 border-b border-border pb-6 last:border-0 last:pb-0">
                   <div className="flex items-start gap-3">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                       {question.number}
@@ -214,8 +214,8 @@ export default function SurveyPage() {
                     <p className="text-lg font-medium leading-relaxed">{question.text}</p>
                   </div>
 
-                  <div className="mr-11 space-y-4">
-                    <div className="space-y-2">
+                  <div className="ml-11 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
                       <Label className="text-sm text-muted-foreground">{t.survey.frequencyLabel}</Label>
                       <RadioGroup
                         value={formData.responses[question.number]?.frequency || ""}
@@ -223,7 +223,7 @@ export default function SurveyPage() {
                         className="grid grid-cols-2 gap-2 sm:grid-cols-3"
                       >
                         {frequencyOptions.map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
+                          <div key={option.value} className="flex items-center gap-2">
                             <RadioGroupItem value={option.value} id={`q${question.number}-${option.value}`} />
                             <Label
                               htmlFor={`q${question.number}-${option.value}`}
@@ -236,7 +236,7 @@ export default function SurveyPage() {
                       </RadioGroup>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label className="text-sm text-muted-foreground">{t.survey.describeExperience}</Label>
                       <Textarea
                         placeholder={t.survey.descriptionPlaceholder}

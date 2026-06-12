@@ -8,14 +8,8 @@ export function LanguageToggle() {
   const { locale, setLocale, t } = useLocale()
 
   return (
-    <Button
-      variant="outline"
-      size="sm"
-      onClick={() => setLocale(locale === "he" ? "en" : "he")}
-      className="gap-2 transition-colors"
-      aria-label={t.common.toggleLanguage}
-    >
-      <LanguagesIcon className="size-4" />
+    <Button variant="outline" size="sm" onClick={() => setLocale(locale === "he" ? "en" : "he")} aria-label={t.common.toggleLanguage}>
+      <LanguagesIcon data-icon="inline-start" />
       <span className="font-medium">{t.common.switchLanguageLabel}</span>
     </Button>
   )

@@ -97,7 +97,7 @@ function DashboardScoreCell({ assessment }: { assessment: PatientWithLatestAsses
       ) : assessment ? (
         <div className="flex items-center gap-0">
           <span className="font-mono text-2xl font-bold">{assessment.total_score}</span>
-          <span className="text-xs text-muted-foreground ml-0.5">/ 100</span>
+          <span className="text-xs text-muted-foreground">/ 100</span>
         </div>
       ) : (
         <span className="text-muted-foreground">—</span>
@@ -157,19 +157,19 @@ function DashboardTrendCell({
         previousScore !== undefined ? (
           assessment.total_score < previousScore ? (
             <div className="flex items-center gap-1 text-success">
-              <TrendingDownIcon className="size-4" />
+              <TrendingDownIcon />
               <span className="text-xs font-medium">-{previousScore - assessment.total_score}</span>
             </div>
           ) : assessment.total_score > previousScore ? (
             <div className="flex items-center gap-1 text-destructive">
-              <TrendingUpIcon className="size-4" />
+              <TrendingUpIcon />
               <span className="text-xs font-medium">+{assessment.total_score - previousScore}</span>
             </div>
           ) : (
-            <MinusIcon className="size-4 text-muted-foreground" />
+            <MinusIcon className="text-muted-foreground" />
           )
         ) : (
-          <MinusIcon className="size-4 text-muted-foreground" />
+          <MinusIcon className="text-muted-foreground" />
         )
       ) : (
         <span className="text-muted-foreground">—</span>
@@ -188,22 +188,22 @@ function DashboardSymptomsCell({
       <div className="flex gap-2">
         {assessment?.has_screen_intolerance && (
           <div className="rounded-md bg-warning/10 p-1.5">
-            <MonitorIcon className="size-4 text-warning" />
+            <MonitorIcon className="text-warning" />
           </div>
         )}
         {assessment?.has_night_driving_issues && (
           <div className="rounded-md bg-info/10 p-1.5">
-            <MoonIcon className="size-4 text-info" />
+            <MoonIcon className="text-info" />
           </div>
         )}
         {assessment?.has_wind_sensitivity && (
           <div className="rounded-md bg-primary/10 p-1.5">
-            <WindIcon className="size-4 text-primary" />
+            <WindIcon className="text-primary" />
           </div>
         )}
         {assessment?.has_low_humidity_issues && (
           <div className="rounded-md bg-chart-2/10 p-1.5">
-            <DropletIcon className="size-4 text-chart-2" />
+            <DropletIcon className="text-chart-2" />
           </div>
         )}
       </div>
@@ -255,12 +255,12 @@ function DashboardStatusCell({
           renderDisplay={(val) =>
             val === "true" ? (
               <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-                <CheckCircleIcon className="mr-1 size-3" />
+                <CheckCircleIcon className="size-3" />
                 Reviewed
               </Badge>
             ) : (
               <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-                <AlertCircleIcon className="mr-1 size-3" />
+                <AlertCircleIcon className="size-3" />
                 Needs Review
               </Badge>
             )
@@ -276,12 +276,12 @@ function DashboardStatusCell({
       ) : assessment ? (
         assessment.reviewed ? (
           <Badge variant="outline" className="bg-success/10 text-success border-success/20">
-            <CheckCircleIcon className="mr-1 size-3" />
+            <CheckCircleIcon className="size-3" />
             Reviewed
           </Badge>
         ) : (
           <Badge variant="outline" className="bg-warning/10 text-warning border-warning/20">
-            <AlertCircleIcon className="mr-1 size-3" />
+            <AlertCircleIcon className="size-3" />
             Needs Review
           </Badge>
         )

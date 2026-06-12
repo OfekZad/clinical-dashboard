@@ -207,12 +207,12 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
-      <div className="mx-auto max-w-3xl space-y-6">
+      <div className="mx-auto flex max-w-3xl flex-col gap-6">
         <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
+          <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3">
               <div className="rounded-lg bg-primary/10 p-2">
-                <EyeIcon className="size-6 text-primary" />
+                <EyeIcon className="text-primary" />
               </div>
               <h1 className="font-sans text-3xl font-bold tracking-tight">{t.survey.title}</h1>
             </div>
@@ -226,7 +226,7 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
         </div>
 
         {patient && (
-          <Card className="border-primary/20 bg-primary/5">
+          <Card>
             <CardContent className="p-4">
               <p className="text-lg">
                 {t.survey.greetingPrefix} <span className="font-bold">{patient.name}</span>
@@ -242,14 +242,14 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
           </CardHeader>
         </Card>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <Card>
             <CardHeader>
               <CardTitle>{t.survey.questionsSection}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-8">
+            <CardContent className="flex flex-col gap-8">
               {questions.map((question) => (
-                <div key={question.number} className="space-y-4 border-b border-border pb-6 last:border-0 last:pb-0">
+                <div key={question.number} className="flex flex-col gap-4 border-b border-border pb-6 last:border-0 last:pb-0">
                   <div className="flex items-start gap-3">
                     <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                       {question.number}
@@ -257,8 +257,8 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                     <p className="text-lg font-medium leading-relaxed">{question.text}</p>
                   </div>
 
-                  <div className="mr-11 space-y-4">
-                    <div className="space-y-2">
+                  <div className="ml-11 flex flex-col gap-4">
+                    <div className="flex flex-col gap-2">
                       <Label className="text-sm text-muted-foreground">{t.survey.frequencyLabel}</Label>
                       <RadioGroup
                         value={formData.responses[question.number]?.frequency || ""}
@@ -266,7 +266,7 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                         className="grid grid-cols-2 gap-2 sm:grid-cols-3"
                       >
                         {frequencyOptions.map((option) => (
-                          <div key={option.value} className="flex items-center space-x-2 space-x-reverse">
+                          <div key={option.value} className="flex items-center gap-2">
                             <RadioGroupItem value={option.value} id={`q${question.number}-${option.value}`} />
                             <Label
                               htmlFor={`q${question.number}-${option.value}`}
@@ -279,7 +279,7 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                       </RadioGroup>
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2">
                       <Label className="text-sm text-muted-foreground">{t.survey.describeExperience}</Label>
                       <Textarea
                         placeholder={t.survey.descriptionPlaceholder}
@@ -299,21 +299,21 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
               <CardTitle>{t.survey.medicationSection}</CardTitle>
               <CardDescription>{t.survey.medicationInstructions}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
+            <CardContent className="flex flex-col gap-6">
+              <div className="flex flex-col gap-3">
                 <Label className="text-base font-medium">{t.survey.anyMedicationChanges}</Label>
                 <RadioGroup
                   value={formData.medicationChanges ? "yes" : "no"}
                   onValueChange={(value) => setFormData((prev) => ({ ...prev, medicationChanges: value === "yes" }))}
                   className="flex gap-4"
                 >
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex items-center gap-2">
                     <RadioGroupItem value="yes" id="med-changes-yes" />
                     <Label htmlFor="med-changes-yes" className="cursor-pointer font-normal">
                       {t.survey.yes}
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 space-x-reverse">
+                  <div className="flex items-center gap-2">
                     <RadioGroupItem value="no" id="med-changes-no" />
                     <Label htmlFor="med-changes-no" className="cursor-pointer font-normal">
                       {t.survey.no}
@@ -323,8 +323,8 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
               </div>
 
               {formData.medicationChanges && (
-                <div className="space-y-6 border-t pt-6">
-                  <div className="space-y-4">
+                <div className="flex flex-col gap-6 border-t pt-6">
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <Label className="text-base font-medium">{t.survey.newMedications}</Label>
                       <Button
@@ -332,9 +332,8 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                         variant="outline"
                         size="sm"
                         onClick={() => addMedication("new")}
-                        className="gap-2"
                       >
-                        <PlusIcon className="size-4" />
+                        <PlusIcon data-icon="inline-start" />
                         {t.survey.addMedication}
                       </Button>
                     </div>
@@ -349,7 +348,7 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                     ))}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <Label className="text-base font-medium">{t.survey.stoppedMedications}</Label>
                       <Button
@@ -357,9 +356,8 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                         variant="outline"
                         size="sm"
                         onClick={() => addMedication("stopped")}
-                        className="gap-2"
                       >
-                        <PlusIcon className="size-4" />
+                        <PlusIcon data-icon="inline-start" />
                         {t.survey.addMedication}
                       </Button>
                     </div>
@@ -374,7 +372,7 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                     ))}
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
                       <Label className="text-base font-medium">{t.survey.continuingMedications}</Label>
                       <Button
@@ -382,9 +380,8 @@ export default function PatientSurveyPage({ params }: { params: Promise<{ patien
                         variant="outline"
                         size="sm"
                         onClick={() => addMedication("continuing")}
-                        className="gap-2"
                       >
-                        <PlusIcon className="size-4" />
+                        <PlusIcon data-icon="inline-start" />
                         {t.survey.addMedication}
                       </Button>
                     </div>
@@ -434,9 +431,9 @@ function MedicationForm({
 }) {
   const { t } = useLocale()
   return (
-    <div className="space-y-3 rounded-lg border border-border bg-card p-4">
+    <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
       <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 space-y-3">
+        <div className="flex flex-1 flex-col gap-3">
           <Input
             placeholder={t.survey.medicationNamePlaceholder}
             value={medication.medication_name}
@@ -461,7 +458,7 @@ function MedicationForm({
           {(showStartDate || showStopDate) && (
             <div className="grid gap-3 sm:grid-cols-2">
               {showStartDate && (
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <Label className="text-xs text-muted-foreground">{t.survey.startDateLabel}</Label>
                   <Input
                     type="date"
@@ -471,7 +468,7 @@ function MedicationForm({
                 </div>
               )}
               {showStopDate && (
-                <div className="space-y-1">
+                <div className="flex flex-col gap-1">
                   <Label className="text-xs text-muted-foreground">{t.survey.stopDateLabel}</Label>
                   <Input
                     type="date"
@@ -490,7 +487,7 @@ function MedicationForm({
           />
         </div>
         <Button type="button" variant="ghost" size="icon" onClick={onRemove} className="shrink-0 text-destructive">
-          <XIcon className="size-4" />
+          <XIcon />
         </Button>
       </div>
     </div>

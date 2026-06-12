@@ -38,19 +38,19 @@ const frequencyLabels: Record<FrequencyKey, { en: string; he: string }> = {
 
 function getSeverityColor(severity: string) {
   switch (severity) {
-    case "Normal": return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-800"
-    case "Mild": return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800"
-    case "Moderate": return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800"
-    case "Severe": return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/50 dark:border-red-800"
-    default: return "text-gray-600 bg-gray-50 border-gray-200 dark:text-gray-400 dark:bg-gray-950/50 dark:border-gray-800"
+    case "Normal": return "bg-success/10 text-success border-success/20"
+    case "Mild": return "bg-info/10 text-info border-info/20"
+    case "Moderate": return "bg-warning/10 text-warning border-warning/20"
+    case "Severe": return "bg-destructive/10 text-destructive border-destructive/20"
+    default: return "bg-muted text-muted-foreground border-border"
   }
 }
 
 function getScoreColor(score: number) {
-  if (score === 0) return "text-emerald-600 bg-emerald-50 border-emerald-200 dark:text-emerald-400 dark:bg-emerald-950/50 dark:border-emerald-800"
-  if (score <= 1) return "text-blue-600 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950/50 dark:border-blue-800"
-  if (score <= 2) return "text-amber-600 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/50 dark:border-amber-800"
-  return "text-red-600 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/50 dark:border-red-800"
+  if (score === 0) return "bg-success/10 text-success border-success/20"
+  if (score <= 1) return "bg-info/10 text-info border-info/20"
+  if (score <= 2) return "bg-warning/10 text-warning border-warning/20"
+  return "bg-destructive/10 text-destructive border-destructive/20"
 }
 
 function getScoreLabel(score: number, locale: Locale): string {
@@ -64,9 +64,9 @@ function getScoreLabel(score: number, locale: Locale): string {
 function getTrendIndicator(currentScore: number, previousScore: number | null) {
   if (previousScore === null) return null
   const diff = currentScore - previousScore
-  if (diff > 5) return { icon: TrendingUpIcon, label: "Worsening", color: "text-red-600 dark:text-red-400" }
-  if (diff < -5) return { icon: TrendingDownIcon, label: "Improving", color: "text-emerald-600 dark:text-emerald-400" }
-  return { icon: MinusIcon, label: "Stable", color: "text-gray-600 dark:text-gray-400" }
+  if (diff > 5) return { icon: TrendingUpIcon, label: "Worsening", color: "text-destructive" }
+  if (diff < -5) return { icon: TrendingDownIcon, label: "Improving", color: "text-success" }
+  return { icon: MinusIcon, label: "Stable", color: "text-muted-foreground" }
 }
 
 function ScoreTrendChart({ items, locale, t }: { items: AssessmentWithType[]; locale: Locale; t: { scoreTrend: string } }) {
@@ -230,8 +230,8 @@ export function CachedPatientContent({ patientId }: Props) {
 
   const medStatusStyle = (status: string) => {
     switch (status) {
-      case "active": return "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
-      case "new": return "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+      case "active": return "border-success/20 bg-success/5 text-success"
+      case "new": return "border-warning/20 bg-warning/5 text-warning"
       case "stopped": return "border-muted-foreground/30 bg-muted/20 text-muted-foreground/60"
       default: return "border-border bg-accent/20 text-foreground"
     }
@@ -248,12 +248,12 @@ export function CachedPatientContent({ patientId }: Props) {
 
   return (
     <div className="min-h-screen bg-background p-3 md:p-6">
-      <div className="mx-auto max-w-7xl space-y-4">
+      <div className="mx-auto flex max-w-7xl flex-col gap-4">
         {/* Header */}
         <div className="flex items-center justify-between">
           <Link href="/dashboard">
-            <Button variant="ghost" className="gap-1.5 h-8 text-sm">
-              <ArrowLeftIcon className="size-4" />
+            <Button variant="ghost" size="sm">
+              <ArrowLeftIcon data-icon="inline-start" />
               {t.patient.backToDashboard}
             </Button>
           </Link>
@@ -287,15 +287,15 @@ export function CachedPatientContent({ patientId }: Props) {
           <>
             <div className="grid gap-4 lg:grid-cols-2">
               {/* Left Column: Assessment History */}
-              <div className="space-y-4 relative z-50">
+              <div className="flex flex-col gap-4 relative z-50">
                 <Card className="border-border bg-card shadow-sm">
                   <CardHeader className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <TrendingDownIcon className="size-4 text-muted-foreground" />
+                      <TrendingDownIcon className="text-muted-foreground" />
                       <CardTitle className="text-sm font-semibold">{t.patient.assessmentHistory}</CardTitle>
                     </div>
                   </CardHeader>
-                  <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                  <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
                     {allItems.slice(0, 8).map((hist, index) => {
                       const prevHist = allItems[index + 1] || null
                       const histTrend = prevHist ? getTrendIndicator(hist.total_score, prevHist.total_score) : null
@@ -314,21 +314,21 @@ export function CachedPatientContent({ patientId }: Props) {
                                 </Badge>
                                 {histTrend && (
                                   <div className={`flex items-center gap-0.5 ${histTrend.color}`}>
-                                    <histTrend.icon className="size-3" />
+                                    <histTrend.icon />
                                   </div>
                                 )}
                               </div>
-                              <ChevronRightIcon className="size-3 shrink-0 text-muted-foreground" />
+                              <ChevronRightIcon className="text-muted-foreground" />
                             </div>
                             <div className="flex items-center justify-between mt-0.5">
                               <span className="text-[10px] text-muted-foreground">
                                 {new Date(hist.date).toLocaleDateString(localeTag[locale], { month: "short", day: "numeric", year: "numeric" })}
                               </span>
                               <div className="flex gap-1">
-                                {hist.has_screen_intolerance && <MonitorIcon className="size-2.5 text-amber-500" />}
-                                {hist.has_night_driving_issues && <MoonIcon className="size-2.5 text-blue-500" />}
-                                {hist.has_wind_sensitivity && <WindIcon className="size-2.5 text-cyan-500" />}
-                                {hist.has_low_humidity_issues && <DropletIcon className="size-2.5 text-indigo-500" />}
+                                {hist.has_screen_intolerance && <MonitorIcon className="text-warning" />}
+                                {hist.has_night_driving_issues && <MoonIcon className="text-info" />}
+                                {hist.has_wind_sensitivity && <WindIcon className="text-primary" />}
+                                {hist.has_low_humidity_issues && <DropletIcon className="text-chart-2" />}
                               </div>
                             </div>
                           </div>
@@ -344,24 +344,24 @@ export function CachedPatientContent({ patientId }: Props) {
               </div>
 
               {/* Right Column: Flags + Meds */}
-              <div className="space-y-4">
+              <div className="flex flex-col gap-4">
                 <Card className="border-border bg-card shadow-sm">
                   <CardHeader className="px-4 py-2.5">
                     <div className="flex items-center gap-2">
-                      <ActivityIcon className="size-3.5 text-muted-foreground" />
+                      <ActivityIcon className="text-muted-foreground" />
                       <CardTitle className="text-xs font-semibold">{t.patient.symptomFlagsTitle}</CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent className="px-4 pb-3 pt-0">
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort, color: "amber" },
-                        { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort, color: "blue" },
-                        { flag: assessment.has_wind_sensitivity, icon: WindIcon, label: t.patient.flagWindShort, color: "cyan" },
-                        { flag: assessment.has_low_humidity_issues, icon: DropletIcon, label: t.patient.flagHumidityShort, color: "indigo" },
-                      ].map(({ flag, icon: Icon, label, color }) => (
-                        <div key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${flag ? `border-${color}-300 bg-${color}-50 dark:border-${color}-800 dark:bg-${color}-950/30` : "border-border bg-accent/20 opacity-50"}`}>
-                          <Icon className={`size-3 shrink-0 ${flag ? `text-${color}-600 dark:text-${color}-400` : "text-muted-foreground"}`} />
+                        { flag: assessment.has_screen_intolerance, icon: MonitorIcon, label: t.patient.flagScreenShort },
+                        { flag: assessment.has_night_driving_issues, icon: MoonIcon, label: t.patient.flagNightShort },
+                        { flag: assessment.has_wind_sensitivity, icon: WindIcon, label: t.patient.flagWindShort },
+                        { flag: assessment.has_low_humidity_issues, icon: DropletIcon, label: t.patient.flagHumidityShort },
+                      ].map(({ flag, icon: Icon, label }) => (
+                        <div key={label} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 transition-all ${flag ? "border-primary/20 bg-primary/5" : "border-border bg-accent/20 opacity-50"}`}>
+                          <Icon className={flag ? "text-primary" : "text-muted-foreground"} />
                           <span className={`text-[10px] whitespace-nowrap ${flag ? "font-medium text-foreground" : "text-muted-foreground"}`}>{flag ? label : `No ${label}`}</span>
                         </div>
                       ))}
@@ -372,14 +372,14 @@ export function CachedPatientContent({ patientId }: Props) {
                 <Card className="border-border bg-card shadow-sm">
                   <CardHeader className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <PillIcon className="size-4 text-muted-foreground" />
+                      <PillIcon className="text-muted-foreground" />
                       <CardTitle className="text-sm font-semibold">{t.patient.medications}</CardTitle>
                       {medications.length > 0 && (
                         <Badge variant="secondary" className="text-[10px] px-1.5 py-0">{medications.length}</Badge>
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="px-4 pb-4 pt-0 space-y-2">
+                  <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
                     {medications.length === 0 ? (
                       <p className="text-xs text-center text-muted-foreground">{t.patient.noMedications}</p>
                     ) : (
@@ -387,7 +387,7 @@ export function CachedPatientContent({ patientId }: Props) {
                         const ms = medStatusStyle(med.status)
                         const stopped = med.status === "stopped"
                         return (
-                          <div key={med.id} className={`rounded-lg border p-3 space-y-1 transition-all ${stopped ? ms : `${ms} hover:opacity-90`}`}>
+                          <div key={med.id} className={`flex flex-col gap-1 rounded-lg border p-3 transition-all ${stopped ? ms : `${ms} hover:opacity-90`}`}>
                             <div className="flex items-start justify-between gap-2">
                               <div className="flex-1 min-w-0">
                                 <h4 className={`text-xs font-semibold ${stopped ? "opacity-60" : ""}`}>{med.medication_name}</h4>
@@ -402,7 +402,7 @@ export function CachedPatientContent({ patientId }: Props) {
                                 )}
                                 {med.notes && <p className={`text-[10px] mt-1 ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>{med.notes}</p>}
                               </div>
-                              <Badge className={`shrink-0 text-[9px] px-1.5 py-0 ${stopped ? "border-muted-foreground/30 text-muted-foreground bg-transparent" : med.status === "new" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border-0" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-0"}`}>
+                              <Badge className={`shrink-0 text-[9px] px-1.5 py-0 ${stopped ? "border-muted-foreground/30 text-muted-foreground bg-transparent" : med.status === "new" ? "bg-warning/10 text-warning border-0" : "bg-success/10 text-success border-0"}`}>
                                 {medStatusLabel(med.status)}
                               </Badge>
                             </div>
@@ -419,11 +419,11 @@ export function CachedPatientContent({ patientId }: Props) {
             <Card className="border-border bg-card shadow-sm">
               <CardHeader className="px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <StethoscopeIcon className="size-4 text-muted-foreground" />
+                  <StethoscopeIcon className="text-muted-foreground" />
                   <CardTitle className="text-sm font-semibold">{t.patient.clinicianNotes}</CardTitle>
                 </div>
               </CardHeader>
-              <CardContent className="px-4 pb-4 pt-0 space-y-2">
+              <CardContent className="flex flex-col gap-2 px-4 pb-4 pt-0">
                 {notes.length > 0 ? (
                   notes.map((note) => (
                     <div key={note.id} className="rounded-lg border border-border bg-accent/30 p-3 transition-all hover:bg-accent/50">
