@@ -161,11 +161,3 @@ Three things here don't exist without a programmable phone layer:
 Would this be impressive without the phone? It wouldn't *exist* without the phone — the patient population is the one the web demo can't reach, and the escalation loop is literally two phone calls coordinating.
 
 ---
-
-## What we'd ship next
-
-Resolve the 75s self-hosted cap with the Dial team (or chain calls natively — the state machine already supports it), add inbound: patients call Joy back on the same number (self-hosted mode already routes inbound to the same brain, with non-patient callers safely handled), SMS summaries to the patient after each assessment, and a clinic dashboard reading the same Postgres.
-
-## Key identifiers (for judges who want to verify)
-
-Dial number +1 912 662-0889 · self-hosted endpoint `wss://huodjyassgsrxpvaxkaa.supabase.co/functions/v1/joy-voice` · Supabase project `huodjyassgsrxpvaxkaa` · model `claude-fable-5` (effort=low) · orchestration: Claude scheduled task, Dial CLI · escalation line +972 50 557 3553.
