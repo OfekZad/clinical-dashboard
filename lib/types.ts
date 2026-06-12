@@ -105,6 +105,28 @@ export type PatientMedication = {
   start_date: string | null
   stop_date: string | null
   notes: string | null
+  internal_medication_id?: string | null
+  generic_name?: string | null
+  brand_name?: string | null
+  dosage_strength?: string | null
+  dosage_form?: string | null
+  prescribed_instructions?: string | null
+  quantity_prescribed?: number | null
+  remaining_quantity?: number | null
+  estimated_supply_days?: number | null
+  refill_eligibility_status?: RefillEligibilityStatus
+  prescription_status?: PrescriptionStatus
+  prescribing_provider?: string | null
+  preferred_pharmacy?: string | null
+  pharmacy_phone?: string | null
+  pharmacy_system_id?: string | null
+  last_refill_date?: string | null
+  next_expected_refill_date?: string | null
+  rxnorm_code?: string | null
+  ndc_code?: string | null
+  external_medication_identifiers?: Record<string, unknown>
+  low_medication_flag?: boolean
+  low_medication_detected_at?: string | null
   created_at: string
   updated_at: string
 }
@@ -162,4 +184,112 @@ export type MonthlyTrend = {
   surveys: number
   timeSaved: number
   improvingPatients: number
+}
+
+export type RefillEligibilityStatus = "eligible" | "provider_approval_required" | "staff_review" | "not_eligible"
+
+export type PrescriptionStatus = "active" | "expired" | "cancelled" | "completed" | "unknown"
+
+export type JoyConversationStatus = "active" | "waiting_for_patient" | "refill_requested" | "escalated" | "closed"
+
+export type JoyIntent =
+  | "refill_approval"
+  | "refill_rejection"
+  | "refill_status_question"
+  | "pharmacy_change"
+  | "medication_confusion"
+  | "staff_request"
+  | "clinical_question"
+  | "unclear"
+  | "out_of_scope"
+
+export type JoyMedicationIdentity = {
+  internal_medication_id: string | null
+  patient_medication_record_id: string
+  medication_name: string
+  generic_name: string | null
+  brand_name: string | null
+  dosage_strength: string | null
+  dosage_form: string | null
+  prescribed_instructions: string | null
+  quantity_prescribed: number | null
+  remaining_quantity: number | null
+  estimated_supply_days: number | null
+  refill_eligibility_status: RefillEligibilityStatus
+  prescription_status: PrescriptionStatus
+  prescribing_provider: string | null
+  preferred_pharmacy: string | null
+  pharmacy_phone: string | null
+  pharmacy_system_id: string | null
+  last_refill_date: string | null
+  next_expected_refill_date: string | null
+  rxnorm_code: string | null
+  ndc_code: string | null
+  external_medication_identifiers: Record<string, unknown>
+}
+
+export type JoyPatientMedication = PatientMedication & JoyMedicationIdentity & {
+  low_medication_flag: boolean
+  low_medication_detected_at: string | null
+}
+
+export type JoyRefillConversation = {
+  id: string
+  patient_id: string
+  patient_medication_id: string
+  channel: "sms"
+  status: JoyConversationStatus
+  last_detected_intent: JoyIntent | null
+  escalation_reason: string | null
+  sms_from: string | null
+  sms_to: string | null
+  started_at: string
+  last_message_at: string | null
+  closed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type JoySmsMessage = {
+  id: string
+  conversation_id: string
+  patient_id: string
+  patient_medication_id: string
+  direction: "inbound" | "outbound"
+  body: string
+  interpreted_intent: JoyIntent | null
+  external_message_id: string | null
+  created_at: string
+}
+
+export type JoyRefillRequest = {
+  id: string
+  conversation_id: string | null
+  patient_id: string
+  patient_medication_id: string
+  medication_id: string | null
+  pharmacy_name: string | null
+  pharmacy_phone: string | null
+  status: "pending" | "submitted" | "provider_review" | "staff_review" | "approved" | "denied" | "cancelled"
+  requested_by: string
+  requested_at: string
+  submitted_at: string | null
+  outcome_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type JoyStaffTask = {
+  id: string
+  conversation_id: string | null
+  patient_id: string
+  patient_medication_id: string | null
+  task_type: string
+  reason: string
+  status: "open" | "in_progress" | "resolved" | "cancelled"
+  priority: "low" | "normal" | "high" | "urgent"
+  assigned_to: string | null
+  created_by: string
+  created_at: string
+  resolved_at: string | null
 }

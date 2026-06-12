@@ -1,12 +1,13 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useDataCache, useCachedPatient, useCachedAssessments, useCachedMedications } from "@/lib/cache"
 import type { AssessmentResponse, ClinicianNote, SurveyResponse, AssessmentWithType, PatientMedication } from "@/lib/types"
 import { CacheLoadingState } from "./cache-loading"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import {
   ArrowLeftIcon, MonitorIcon, MoonIcon, WindIcon, DropletIcon,
   TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronRightIcon,
@@ -21,6 +22,7 @@ import { AddNoteForm } from "@/components/add-note-form"
 import { MarkReviewedButton } from "@/components/mark-reviewed-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { JoyIndicator } from "@/components/joy-indicator"
+import { JOY_LOW_MEDICATION_THRESHOLD } from "@/lib/joy-constants"
 import { PatientInfoClient } from "@/components/patient-info-client"
 import { AssessmentSidebar } from "@/components/assessment-sidebar"
 import { useSearchParams } from "next/navigation"
@@ -158,7 +160,7 @@ export function CachedPatientContent({ patientId }: Props) {
   const searchParams = useSearchParams()
   const assessmentId = searchParams.get("assessment")
   const { t, locale } = useLocale()
-  const { cache, loading } = useDataCache()
+  const { cache, loading, refresh } = useDataCache()
 
   // Read everything from cache using memoized selectors
   const patient = useCachedPatient(patientId)
@@ -401,6 +403,15 @@ export function CachedPatientContent({ patientId }: Props) {
                                   <div className="text-[10px] text-muted-foreground">{t.patient.stopDate}: {new Date(med.stop_date).toLocaleDateString(localeTag[locale])}</div>
                                 )}
                                 {med.notes && <p className={`text-[10px] mt-1 ${stopped ? "text-muted-foreground/50" : "text-muted-foreground"}`}>{med.notes}</p>}
+                                {!stopped && (
+                                  <MedicationRemainingQuantityEditor
+                                    medication={med}
+                                    patientId={patientId}
+                                    label={t.patient.remainingMedicineNumber}
+                                    helpText={t.patient.remainingMedicineHelp}
+                                    onSaved={refresh}
+                                  />
+                                )}
                               </div>
                               <Badge className={`shrink-0 text-[9px] px-1.5 py-0 ${stopped ? "border-muted-foreground/30 text-muted-foreground bg-transparent" : med.status === "new" ? "bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-400 border-0" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 border-0"}`}>
                                 {medStatusLabel(med.status)}
@@ -455,6 +466,95 @@ export function CachedPatientContent({ patientId }: Props) {
           <div className="py-12 text-center text-muted-foreground">{t.patient.noAssessments}</div>
         )}
       </div>
+    </div>
+  )
+}
+
+interface MedicationRemainingQuantityEditorProps {
+  medication: PatientMedication
+  patientId: string
+  label: string
+  helpText: string
+  onSaved: () => Promise<void>
+}
+
+function MedicationRemainingQuantityEditor({
+  medication,
+  patientId,
+  label,
+  helpText,
+  onSaved,
+}: MedicationRemainingQuantityEditorProps) {
+  const currentValue = medication.remaining_quantity
+  const [value, setValue] = useState(currentValue == null ? "" : String(currentValue))
+  const [lastSavedValue, setLastSavedValue] = useState(value)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const parsedValue = value.trim() === "" ? null : Number(value)
+  const isLow = parsedValue !== null && Number.isFinite(parsedValue) && parsedValue <= JOY_LOW_MEDICATION_THRESHOLD
+
+  async function saveRemainingQuantity() {
+    if (value === lastSavedValue) return
+
+    const remainingQuantity = value.trim() === "" ? null : Number(value)
+    if (remainingQuantity !== null && (!Number.isFinite(remainingQuantity) || remainingQuantity < 0)) {
+      setError("Enter a positive number")
+      return
+    }
+
+    setSaving(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`/api/medication/${medication.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ patientId, remainingQuantity }),
+      })
+
+      if (!response.ok) {
+        throw new Error("Medication update failed")
+      }
+
+      setLastSavedValue(value)
+      await onSaved()
+    } catch {
+      setError("Could not save")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+      <span>{label}:</span>
+      <Input
+        type="number"
+        min="0"
+        step="1"
+        inputMode="numeric"
+        value={value}
+        onChange={(event) => setValue(event.target.value)}
+        onBlur={saveRemainingQuantity}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.preventDefault()
+            event.currentTarget.blur()
+          }
+        }}
+        disabled={saving}
+        className="h-6 w-16 px-2 py-0 text-[10px]"
+        aria-label={label}
+      />
+      {isLow && (
+        <Badge className="border-amber-200 bg-amber-50 px-1.5 py-0 text-[9px] text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-400">
+          Joy SMS ready
+        </Badge>
+      )}
+      <span>{helpText}</span>
+      {saving && <span>Saving...</span>}
+      {error && <span className="text-red-600 dark:text-red-400">{error}</span>}
     </div>
   )
 }

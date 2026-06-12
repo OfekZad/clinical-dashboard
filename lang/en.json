@@ -96,6 +96,8 @@
     "startDate": "Start Date",
     "stopDate": "Stop Date",
     "medicationNotes": "Notes",
+    "remainingMedicineNumber": "Medicine remaining",
+    "remainingMedicineHelp": "Joy SMS sends at 7 or fewer",
     "medicationStatus": {
       "active": "Active",
       "stopped": "Stopped",
