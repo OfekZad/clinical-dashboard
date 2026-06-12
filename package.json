@@ -6,7 +6,13 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "dial:doctor": "dial doctor --json",
+    "dial:call": "dial call --language en-US --json",
+    "dial:call:get": "dial call get --json",
+    "dial:wait-ended": "dial wait-for call.ended -t 40 --json",
+    "dial:wait-transcribed": "dial wait-for call.transcribed -t 40 --json",
+    "format": "pnpm dlx prettier@^3.0.0 --write ."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

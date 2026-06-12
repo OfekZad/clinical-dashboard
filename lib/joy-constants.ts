@@ -1,0 +1,1 @@
+export const JOY_LOW_MEDICATION_THRESHOLD = 7
