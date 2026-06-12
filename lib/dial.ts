@@ -25,7 +25,9 @@ export interface DialEvent {
 }
 
 /**
- * Send an outbound SMS via Dial.
+ * Send an outbound message via Dial (SMS channel).
+ * WhatsApp capability exists on the number but is not yet exposed by the
+ * REST API — contact Dial (founders@getdial.ai) to enable it.
  */
 export async function sendSMS(to: string, body: string): Promise<DialMessage> {
   const phoneNumberId = process.env.DIAL_PHONE_NUMBER_ID
