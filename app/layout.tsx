@@ -1,17 +1,10 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { ThemeProvider } from "@/components/theme-provider"
-import { LocaleProvider } from "@/components/locale-provider"
-import { DataCacheProvider } from "@/lib/cache/cache-context"
-import "./globals.css"
-
-// 🔥 OPTIMIZATION: font-display: swap prevents the font from blocking
-// the initial page render. The browser will use a fallback font immediately
-// and swap to Geist once it downloads.
-const _geist = Geist({ subsets: ["latin"], display: "swap" })
-const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
+import type React from "react";
+import type { Metadata } from "next";
+import { Analytics } from "@vercel/analytics/next";
+import { ThemeProvider } from "@/components/theme-provider";
+import { LocaleProvider } from "@/components/locale-provider";
+import { DataCacheProvider } from "@/lib/cache/cache-context";
+import "./globals.css";
 
 const metadataByLocale = {
   he: {
@@ -22,16 +15,17 @@ const metadataByLocale = {
     title: "Dry Eye Clinical Dashboard",
     description: "Real-time patient monitoring with symptom assessment",
   },
-}
+};
 
 // 🔥 OPTIMIZATION: generateMetadata reads cookies for locale-specific titles,
 // but this does NOT make the layout itself dynamic. The layout can still be
 // served from Vercel's edge cache.
 export async function generateMetadata(): Promise<Metadata> {
-  const { defaultLocale } = await import("@/lib/i18n")
-  const { getLocale } = await import("@/lib/locale")
-  const locale = await getLocale()
-  const { title, description } = metadataByLocale[locale] ?? metadataByLocale[defaultLocale]
+  const { defaultLocale } = await import("@/lib/i18n");
+  const { getLocale } = await import("@/lib/locale");
+  const locale = await getLocale();
+  const { title, description } =
+    metadataByLocale[locale] ?? metadataByLocale[defaultLocale];
   return {
     title,
     description,
@@ -53,7 +47,7 @@ export async function generateMetadata(): Promise<Metadata> {
       ],
       apple: "/apple-icon.png",
     },
-  }
+  };
 }
 
 // 🔥 OPTIMIZATION: RootLayout is now SYNCHRONOUS — no async, no cookies() call.
@@ -67,10 +61,15 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" dir="ltr" className="light bg-background" suppressHydrationWarning>
+    <html
+      lang="en"
+      dir="ltr"
+      className="light bg-background"
+      suppressHydrationWarning
+    >
       <body className={`font-sans antialiased`}>
         <ThemeProvider defaultTheme="light">
           <LocaleProvider>
@@ -80,5 +79,5 @@ export default function RootLayout({
         <Analytics />
       </body>
     </html>
-  )
+  );
 }
