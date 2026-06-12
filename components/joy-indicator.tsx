@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils"
 import { JoyStatsDialog } from "./joy-stats-dialog"
 import type { JoyCallStatusResponse } from "@/app/api/joy/call-status/route"
 
-export type JoyState = "idle" | "in_call" | "escalating"
+export type JoyState = "idle" | "in_call" | "escalating" | "sms_active"
 
 export interface JoyStats {
   callsToday: number
@@ -49,6 +49,14 @@ const STATE_CONFIG: Record<
     textClass: "text-red-700",
     borderClass: "border-red-300",
   },
+  sms_active: {
+    emoji: "💬",
+    label: "Texting",
+    bgClass: "bg-blue-500",
+    pulseClass: "shadow-[0_0_14px_3px] shadow-blue-400/60",
+    textClass: "text-blue-700",
+    borderClass: "border-blue-300",
+  },
 }
 
 // Generate deterministic mock stats for demo purposes
@@ -90,9 +98,11 @@ export function JoyIndicator() {
         if (!cancelled) {
           if (data.status === "in_progress") {
             setState("in_call")
+          } else if (data.status === "escalating") {
+            setState("escalating")
+          } else if (data.status === "sms_active") {
+            setState("sms_active")
           } else {
-            // For now, 'idle' and 'escalating' both show as idle visually;
-            // the escalating state exists in the config but we don't set it yet.
             setState("idle")
           }
         }
@@ -137,6 +147,7 @@ export function JoyIndicator() {
             state === "idle" && "animate-joy-pulse-idle",
             state === "in_call" && "animate-joy-pulse-call",
             state === "escalating" && "animate-joy-pulse-escalate",
+            state === "sms_active" && "animate-joy-pulse-call",
           )}
           style={{ opacity: 0.35 }}
         />
