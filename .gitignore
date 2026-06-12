@@ -25,3 +25,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local secrets and Dial CLI auth
+!.env.example
+.env
+.env.local
+*.env
+dashboard.env
+auth.v1.json
+.local/
+
+# build artifacts and OS files
+dist/
+.DS_Store
+
+# pnpm debug logs
+pnpm-debug.log*

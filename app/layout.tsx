@@ -1,17 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Geist, Geist_Mono } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { LocaleProvider } from "@/components/locale-provider"
 import { DataCacheProvider } from "@/lib/cache/cache-context"
 import "./globals.css"
-
-// 🔥 OPTIMIZATION: font-display: swap prevents the font from blocking
-// the initial page render. The browser will use a fallback font immediately
-// and swap to Geist once it downloads.
-const _geist = Geist({ subsets: ["latin"], display: "swap" })
-const _geistMono = Geist_Mono({ subsets: ["latin"], display: "swap" })
 
 const metadataByLocale = {
   he: {
@@ -71,7 +64,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" dir="ltr" className="light bg-background" suppressHydrationWarning>
-      <body className={`font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <ThemeProvider defaultTheme="light">
           <LocaleProvider>
             <DataCacheProvider>{children}</DataCacheProvider>

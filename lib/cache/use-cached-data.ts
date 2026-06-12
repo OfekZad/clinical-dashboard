@@ -93,7 +93,10 @@ export function useCachedDashboardPatients(): PatientWithLatestAssessment[] {
     const surveys = Object.values(cache.patient_surveys).filter((s) => s.status === "scored" && s.total_score !== null)
 
     // Group by patient_id
-    const byPatient: Record<string, Array<{ date: Date; score: number; severity: string; reviewed: boolean; data: any }>> = {}
+    const byPatient: Record<
+      string,
+      Array<{ date: Date; score: number; severity: Assessment["severity_level"]; reviewed: boolean; data: Partial<Assessment> & { id: string } }>
+    > = {}
 
     for (const a of assessments) {
       if (!byPatient[a.patient_id]) byPatient[a.patient_id] = []
@@ -114,7 +117,11 @@ export function useCachedDashboardPatients(): PatientWithLatestAssessment[] {
           score: s.total_score!,
           severity: s.severity_level!,
           reviewed: true,
-          data: s,
+          data: {
+            id: s.id,
+            patient_id: s.patient_id,
+            created_at: s.created_at,
+          },
         })
       }
     }
@@ -134,18 +141,32 @@ export function useCachedDashboardPatients(): PatientWithLatestAssessment[] {
         latest_assessment: latest
           ? {
               id: latest.data.id,
+              patient_id: latest.data.patient_id || p.id,
+              assessment_date: latest.date.toISOString(),
               total_score: latest.score,
               severity_level: latest.severity,
-              reviewed: latest.reviewed,
-              assessment_date: latest.date.toISOString(),
               has_screen_intolerance: latest.data.has_screen_intolerance ?? false,
               has_night_driving_issues: latest.data.has_night_driving_issues ?? false,
               has_wind_sensitivity: latest.data.has_wind_sensitivity ?? false,
               has_low_humidity_issues: latest.data.has_low_humidity_issues ?? false,
+              reviewed: latest.reviewed,
+              created_at: latest.data.created_at || latest.date.toISOString(),
             }
           : null,
         previous_assessment: previous
-          ? { total_score: previous.score }
+          ? {
+              id: previous.data.id,
+              patient_id: previous.data.patient_id || p.id,
+              assessment_date: previous.date.toISOString(),
+              total_score: previous.score,
+              severity_level: previous.severity,
+              has_screen_intolerance: previous.data.has_screen_intolerance ?? false,
+              has_night_driving_issues: previous.data.has_night_driving_issues ?? false,
+              has_wind_sensitivity: previous.data.has_wind_sensitivity ?? false,
+              has_low_humidity_issues: previous.data.has_low_humidity_issues ?? false,
+              reviewed: previous.reviewed,
+              created_at: previous.data.created_at || previous.date.toISOString(),
+            }
           : null,
       }
     })

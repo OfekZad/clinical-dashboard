@@ -6,7 +6,11 @@
     "build": "next build",
     "dev": "next dev",
     "lint": "eslint .",
-    "start": "next start"
+    "start": "next start",
+    "dial:doctor": "dial doctor --json",
+    "dial:wait-ended": "dial wait-for call.ended -t 40 --json",
+    "dial:wait-transcribed": "dial wait-for call.transcribed -t 40 --json",
+    "format": "pnpm exec prettier --write ."
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -38,7 +42,6 @@
     "@radix-ui/react-toggle-group": "1.1.1",
     "@radix-ui/react-tooltip": "1.1.6",
     "@supabase/ssr": "0.8.0",
-    "@supabase/supabase-js": "latest",
     "@vercel/analytics": "1.3.1",
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",

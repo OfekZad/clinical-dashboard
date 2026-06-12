@@ -35,10 +35,10 @@ async function getPendingSurveys(): Promise<PatientSurveyWithResponses[]> {
     .order("question_number", { ascending: true })
 
   // Group responses by survey_id in-memory
-  const responsesBySurveyId: Record<string, typeof allResponses> = {}
+  const responsesBySurveyId: Record<string, NonNullable<typeof allResponses>> = {}
   for (const r of allResponses || []) {
     if (!responsesBySurveyId[r.survey_id]) responsesBySurveyId[r.survey_id] = []
-    responsesBySurveyId[r.survey_id].push(r)
+    responsesBySurveyId[r.survey_id]!.push(r)
   }
 
   return surveys.map((survey) => ({
