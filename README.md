@@ -16,7 +16,7 @@ Joy's number: **+1 (912) 662-0889** — the entire patient-facing product fits i
 
 ## The 30-second pitch
 
-Chronic-disease follow-up is a phone problem. Dry-eye patients are supposed to be re-assessed between visits with the OSDI questionnaire (12 questions, validated, scored 0–100) — in practice nobody does it, because staff phone-rounds don't scale and patients ignore web portals. The patients who dominate chronic eye disease are exactly the ones a web app can't reach.
+Chronic-disease follow-up is a phone problem. Dry-eye patients are supposed to be re-assessed between visits with the OSDI questionnaire (12 questions, validated, scored 0–100) — in practice nobody does it, and the clinics that do burn precious clinician hours a doctor could spend in surgery. Staff phone-rounds don't scale and patients ignore web portals. The patients who dominate chronic eye disease are exactly the ones a web app can't reach.
 
 **Joy is an autonomous agent that calls the patient**, runs the OSDI as a natural conversation, **scores every answer into the clinical database in real time while still on the line**, and — if the patient mentions a red-flag symptom mid-sentence — **picks up a second phone line and calls the clinic within seconds**, while the patient call is still going. Between visits, Joy also watches the medication table and runs an **SMS refill loop**: it texts patients who are running low, holds the conversation, and files the refill request for the doctor to approve.
 
