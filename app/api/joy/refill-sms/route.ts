@@ -37,14 +37,17 @@ export async function PUT(request: NextRequest) {
   }
 
   try {
-    const { patient_medication_id: patientMedicationId } = (await request.json()) as { patient_medication_id?: string }
+    const { patient_medication_id: patientMedicationId, to_phone: toPhone } = (await request.json()) as {
+      patient_medication_id?: string
+      to_phone?: string
+    }
 
     if (!patientMedicationId) {
       return NextResponse.json({ success: false, error: "Missing required field: patient_medication_id" }, { status: 400 })
     }
 
     const supabase = await createServerClient()
-    const result = await startJoyRefillOutreach(supabase, patientMedicationId)
+    const result = await startJoyRefillOutreach(supabase, patientMedicationId, toPhone)
 
     return NextResponse.json({ success: true, data: result }, { status: 201 })
   } catch (error) {

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { sendJoySms, type SmsDeliveryResult } from "@/lib/joy/sms-provider"
 import type {
   JoyActionLogType,
   JoyEscalationReason,
@@ -92,7 +93,7 @@ export function buildJoyReply(decision: JoyRefillDecision, context: JoyMedicatio
   return "Thanks for letting me know. I am sending this to Dr. Miller's office so a staff member can help. If this is urgent, please call the office directly."
 }
 
-export async function startJoyRefillOutreach(supabase: SupabaseClient, patientMedicationRecordId: string) {
+export async function startJoyRefillOutreach(supabase: SupabaseClient, patientMedicationRecordId: string, toPhoneOverride?: string) {
   const context = await loadMedicationContext(supabase, patientMedicationRecordId)
 
   if (!context) {
@@ -101,16 +102,17 @@ export async function startJoyRefillOutreach(supabase: SupabaseClient, patientMe
 
   const message = buildJoyOpeningMessage(context)
   const conversation = await upsertConversation(supabase, context, "outreach_sent")
-  await saveSmsMessage(supabase, conversation.id, "outbound", message, "outreach")
+  const delivery = await sendJoySms({ to: toPhoneOverride ?? context.patient.phone, body: message })
+  await saveSmsMessage(supabase, conversation.id, "outbound", message, "outreach", delivery)
   await logJoyAction(supabase, {
     patient_id: context.patient.id,
     patient_medication_id: context.patient_medication_id,
     conversation_id: conversation.id,
     action_type: "outreach_started",
-    details: { message },
+    details: { message, delivery },
   })
 
-  return { context, conversation_id: conversation.id, message }
+  return { context, conversation_id: conversation.id, message, delivery }
 }
 
 export async function processJoySmsReply(supabase: SupabaseClient, payload: JoySmsPayload) {
@@ -140,16 +142,17 @@ export async function processJoySmsReply(supabase: SupabaseClient, payload: JoyS
 
   await updateConversationStatus(supabase, conversation.id, decision.conversationStatus)
   const reply = buildJoyReply(decision, context)
-  await saveSmsMessage(supabase, conversation.id, "outbound", reply, decision.action)
+  const delivery = await sendJoySms({ to: payload.from_phone ?? context.patient.phone, body: reply })
+  await saveSmsMessage(supabase, conversation.id, "outbound", reply, decision.action, delivery)
   await logJoyAction(supabase, {
     patient_id: context.patient.id,
     patient_medication_id: context.patient_medication_id,
     conversation_id: conversation.id,
     action_type: decision.action === "escalate_to_staff" ? "escalated" : decision.action,
-    details: { classification, decision, reply },
+    details: { classification, decision, reply, delivery },
   })
 
-  return { context, conversation_id: conversation.id, classification, decision, reply }
+  return { context, conversation_id: conversation.id, classification, decision, reply, delivery }
 }
 
 function decideRefillAction(
@@ -273,12 +276,17 @@ async function saveSmsMessage(
   direction: "inbound" | "outbound",
   body: string,
   messageType: string,
+  delivery?: SmsDeliveryResult,
 ) {
   const { error } = await supabase.from("joy_sms_messages").insert({
     conversation_id: conversationId,
     direction,
     body,
     message_type: messageType,
+    provider_message_id: delivery?.providerMessageId ?? null,
+    delivery_provider: delivery?.provider ?? null,
+    delivery_status: delivery?.status ?? null,
+    delivery_warning: delivery?.warning ?? null,
   })
 
   if (error) throw new Error(`Failed to save Joy SMS message: ${error.message}`)

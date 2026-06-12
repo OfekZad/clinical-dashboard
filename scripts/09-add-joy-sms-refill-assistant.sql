@@ -55,8 +55,16 @@ CREATE TABLE IF NOT EXISTS joy_sms_messages (
   body TEXT NOT NULL,
   message_type TEXT NOT NULL,
   provider_message_id TEXT,
+  delivery_provider TEXT,
+  delivery_status TEXT CHECK (delivery_status IS NULL OR delivery_status IN ('sent', 'skipped')),
+  delivery_warning TEXT,
   created_at TIMESTAMPTZ DEFAULT now()
 );
+
+ALTER TABLE joy_sms_messages
+  ADD COLUMN IF NOT EXISTS delivery_provider TEXT,
+  ADD COLUMN IF NOT EXISTS delivery_status TEXT CHECK (delivery_status IS NULL OR delivery_status IN ('sent', 'skipped')),
+  ADD COLUMN IF NOT EXISTS delivery_warning TEXT;
 
 CREATE INDEX IF NOT EXISTS idx_joy_sms_messages_conversation_id ON joy_sms_messages(conversation_id);
 CREATE INDEX IF NOT EXISTS idx_joy_sms_messages_created_at ON joy_sms_messages(created_at DESC);
