@@ -140,9 +140,6 @@ export default async function DashboardPage() {
             </h1>
             <p className="text-muted-foreground text-pretty">{t.dashboard.subtitle}</p>
           </div>
-          <div className="flex items-center justify-center">
-            <p className="text-lg font-semibold text-foreground/80">{t.dashboard.title}</p>
-          </div>
           <div className="flex items-center gap-2">
             <JoyIndicator />
             <ThemeToggle />
