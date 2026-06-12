@@ -8,6 +8,8 @@
 
 Joy's number: **+1 (912) 662-0889** — the entire patient-facing product fits in a contact card.
 
+🖥️ **Live clinician dashboard:** [v0-clinical-decision-support-alpha.vercel.app/dashboard](https://v0-clinical-decision-support-alpha.vercel.app/dashboard)
+
 </div>
 
 ---
