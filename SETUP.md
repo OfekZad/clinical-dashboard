@@ -34,6 +34,9 @@ the consolidated script is enough:
    `ON CONFLICT (id) DO NOTHING`), safe to re-run.
 2. `scripts/08-add-fk-indexes.sql` — adds covering indexes for foreign keys
    flagged by the performance advisor.
+3. `scripts/09-add-joy-refill-assistant.sql` — adds Joy SMS refill workflow
+   medication identity fields, conversations, refill requests, staff tasks, and
+   audit logs.
 
 Scripts `01`–`06` document the incremental schema history; `07` supersedes them
 for a fresh setup.
@@ -52,6 +55,30 @@ for a fresh setup.
 | `assessment_timings` | Time-saved metrics (AI vs. survey) |
 | `practice_metrics` | Daily practice ROI roll-ups |
 | `patient_engagement` | Per-patient engagement / streak tracking |
+| `joy_refill_conversations` | Joy SMS refill conversation state |
+| `joy_sms_messages` | Inbound/outbound SMS conversation history |
+| `joy_refill_requests` | Refill requests created or tracked by Joy |
+| `joy_staff_tasks` | Human follow-up tasks for escalation |
+| `joy_audit_logs` | Compliance audit trail for Joy database actions |
+
+
+## Joy SMS refill assistant
+
+Joy starts refill outreach with `POST /api/joy/refill/trigger` using
+`patientId`, `patientMedicationId`, and optional `smsTo`. Incoming SMS replies
+are processed by `POST /api/joy/sms` using `conversationId`, `body`, and
+optional `externalMessageId`.
+
+Set `JOY_SMS_WEBHOOK_URL` to connect an approved SMS provider. Joy posts
+`{ to, body, from }` to that webhook and stores the returned `messageId` when
+available. If the webhook is not configured, the app records the outbound
+message in the database and logs delivery details to the server console. Set
+`JOY_SMS_FROM_NUMBER` when the SMS provider requires a sender number.
+
+Joy does not make clinical decisions. Clinical questions, side effects,
+medication confusion, pharmacy changes, ineligible medications, missing
+pharmacy data, and patient requests for staff create `joy_staff_tasks` and mark
+the conversation escalated.
 
 ## Retell voice-agent integration
 
