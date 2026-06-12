@@ -21,7 +21,7 @@ type JoyContext = {
 export type JoySmsDelivery = {
   to: string
   body: string
-  provider: "configured_webhook" | "console"
+  provider: "configured_webhook" | "vapi" | "console"
   externalMessageId: string | null
 }
 
@@ -173,26 +173,69 @@ async function logAudit(
   }
 }
 
+async function sendSmsViaWebhook(to: string, body: string, webhookUrl: string): Promise<JoySmsDelivery> {
+  const response = await fetch(webhookUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ to, body, from: process.env.JOY_SMS_FROM_NUMBER ?? null }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`SMS webhook failed with status ${response.status}`)
+  }
+
+  const payload = (await response.json().catch(() => ({}))) as { messageId?: string }
+  return { to, body, provider: "configured_webhook", externalMessageId: payload.messageId ?? null }
+}
+
+async function sendSmsViaVapi(to: string, body: string): Promise<JoySmsDelivery> {
+  const apiKey = process.env.VAPI_API_KEY
+  const phoneNumberId = process.env.VAPI_PHONE_NUMBER_ID
+  const assistantId = process.env.VAPI_ASSISTANT_ID
+
+  if (!apiKey || !phoneNumberId || !assistantId) {
+    throw new Error("Vapi SMS requires VAPI_API_KEY, VAPI_PHONE_NUMBER_ID, and VAPI_ASSISTANT_ID")
+  }
+
+  const response = await fetch("https://api.vapi.ai/chat", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      input: body,
+      assistantId,
+      transport: {
+        phoneNumberId,
+        customer: { number: to },
+        useLLMGeneratedMessageForOutbound: false,
+      },
+    }),
+  })
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "")
+    throw new Error(`Vapi SMS failed with status ${response.status}${errorText ? `: ${errorText}` : ""}`)
+  }
+
+  const payload = (await response.json().catch(() => ({}))) as { id?: string; sessionId?: string }
+  return { to, body, provider: "vapi", externalMessageId: payload.id ?? payload.sessionId ?? null }
+}
+
 async function sendSms(to: string | null, body: string): Promise<JoySmsDelivery | null> {
   if (!to) return null
 
-  const webhookUrl = process.env.JOY_SMS_WEBHOOK_URL
-  if (webhookUrl) {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ to, body, from: process.env.JOY_SMS_FROM_NUMBER ?? null }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`SMS webhook failed with status ${response.status}`)
-    }
-
-    const payload = (await response.json().catch(() => ({}))) as { messageId?: string }
-    return { to, body, provider: "configured_webhook", externalMessageId: payload.messageId ?? null }
+  if (process.env.JOY_SMS_PROVIDER === "vapi" || process.env.VAPI_API_KEY) {
+    return sendSmsViaVapi(to, body)
   }
 
-  console.info("Joy SMS delivery skipped; JOY_SMS_WEBHOOK_URL is not configured", { to, body })
+  const webhookUrl = process.env.JOY_SMS_WEBHOOK_URL
+  if (webhookUrl) {
+    return sendSmsViaWebhook(to, body, webhookUrl)
+  }
+
+  console.info("Joy SMS delivery skipped; no SMS provider is configured", { to, body })
   return { to, body, provider: "console", externalMessageId: null }
 }
 

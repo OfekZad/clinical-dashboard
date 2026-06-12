@@ -73,11 +73,17 @@ write a Joy audit log entry. Incoming SMS replies are processed by
 `POST /api/joy/sms` using `conversationId`, `body`, and optional
 `externalMessageId`.
 
-Set `JOY_SMS_WEBHOOK_URL` to connect an approved SMS provider. Joy posts
+Set `JOY_SMS_WEBHOOK_URL` to connect a generic approved SMS provider. Joy posts
 `{ to, body, from }` to that webhook and stores the returned `messageId` when
-available. If the webhook is not configured, the app records the outbound
-message in the database and logs delivery details to the server console. Set
-`JOY_SMS_FROM_NUMBER` when the SMS provider requires a sender number.
+available. Set `JOY_SMS_FROM_NUMBER` when the SMS provider requires a sender
+number.
+
+For Vapi SMS delivery, set `JOY_SMS_PROVIDER=vapi`, `VAPI_API_KEY`,
+`VAPI_PHONE_NUMBER_ID`, and `VAPI_ASSISTANT_ID`. Joy uses Vapi's Chat API SMS
+transport with `useLLMGeneratedMessageForOutbound: false` so the refill text is
+sent directly instead of rewritten by an LLM. Do not commit live API keys to the
+repository. If neither a webhook nor Vapi is configured, the app records the
+outbound message and logs delivery details to the server console only.
 
 Joy does not make clinical decisions. Clinical questions, side effects,
 medication confusion, pharmacy changes, ineligible medications, missing
