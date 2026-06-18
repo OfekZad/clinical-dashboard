@@ -1,10 +1,10 @@
 import { createServerClient } from "@/lib/supabase/server"
 import { type NextRequest, NextResponse } from "next/server"
-import type { RetellAssessmentPayload } from "@/lib/types"
+import type { VoiceAgentAssessmentPayload } from "@/lib/types"
 
 export async function POST(request: NextRequest) {
   try {
-    const payload: RetellAssessmentPayload = await request.json()
+    const payload: VoiceAgentAssessmentPayload = await request.json()
 
     console.log("[v0] Received payload:", JSON.stringify(payload, null, 2))
 

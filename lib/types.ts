@@ -75,7 +75,7 @@ export type PatientSurveyWithResponses = PatientSurvey & {
   responses: SurveyResponse[]
 }
 
-export type RetellAssessmentPayload = {
+export type VoiceAgentAssessmentPayload = {
   patient: {
     name: string
     date_of_birth?: string
@@ -117,6 +117,24 @@ export type MedicationUpdate = {
   start_date?: string
   stop_date?: string
   notes?: string
+}
+
+export type Call = {
+  id: string
+  patient_id: string
+  call_number: number
+  assessment_id: string | null
+  dial_call_id: string | null
+  called_at: string
+  status: "completed" | "no_answer" | "declined" | "failed" | "cancelled"
+  duration_seconds: number | null
+  transcript: string | null
+  summary: string | null
+  next_time: string | null
+  medication_adherence: "confirmed" | "changed" | "not_discussed" | null
+  medication_notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type AssessmentWithType = Assessment & {

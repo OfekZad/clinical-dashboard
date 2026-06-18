@@ -34,6 +34,8 @@ the consolidated script is enough:
    `ON CONFLICT (id) DO NOTHING`), safe to re-run.
 2. `scripts/08-add-fk-indexes.sql` — adds covering indexes for foreign keys
    flagged by the performance advisor.
+3. `scripts/09-add-calls.sql` — adds the `calls` table used by the outbound
+   voice agent ("Joy") as its durable per-patient call log.
 
 Scripts `01`–`06` document the incremental schema history; `07` supersedes them
 for a fresh setup.
@@ -52,11 +54,13 @@ for a fresh setup.
 | `assessment_timings` | Time-saved metrics (AI vs. survey) |
 | `practice_metrics` | Daily practice ROI roll-ups |
 | `patient_engagement` | Per-patient engagement / streak tracking |
+| `calls` | Outbound voice-agent call log: one row per call with status, transcript, summary, carry-forward items, and medication adherence |
 
-## Retell voice-agent integration
+## Voice-agent integration
 
-The Retell AI agent submits assessments to `POST /api/assessment/submit`. See
-`RETELL_API_DOCUMENTATION.md` for the payload contract.
+The outbound voice agent ("Joy") submits assessments to
+`POST /api/assessment/submit`. See `VOICE_AGENT_API_DOCUMENTATION.md` for the
+payload contract. Each call is also recorded in the `calls` table.
 
 ## Security posture
 
